@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+
+<plist version="1.0">
+  <dict>
+    <key>menu_start</key>
+    <string>开始游戏</string>
+    <key>menu_help</key>
+    <string>帮助</string>
+    <key>menu_about</key>
+    <string>关于</string>
+    <key>menu_setting</key>
+    <string>设置</string>
+    <key>menu_feedback</key>
+    <string>反馈</string>
+    <key>menu_exit</key>
+    <string>退出</string>
+    <key>menu_back</key>
+    <string>返回</string>
+    <key>menu_turn_left</key>
+    <string>  &lt;  </string>
+    <key>menu_turn_right</key>
+    <string>  &gt;  </string>
+
+    <key>file_helloworld</key>
+    <string>HelloWorld.png</string>
+
+    <key>undefinition</key>
+    <string>未定义</string>
+  </dict>
+</plist>

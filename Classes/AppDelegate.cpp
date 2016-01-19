@@ -1,5 +1,4 @@
 #include "AppDelegate.h"
-#include "HelloWorldScene.h"
 
 USING_NS_CC;
 
@@ -27,7 +26,7 @@ bool AppDelegate::applicationDidFinishLaunching() {
     auto director = Director::getInstance();
     auto glview = director->getOpenGLView();
     if(!glview) {
-        glview = GLViewImpl::createWithRect("SmartSnake", Rect(0, 0, 960, 640));
+        glview = GLViewImpl::createWithRect("SmartSnake", Rect(0, 0, 960 / 2, 640 / 2));
         director->setOpenGLView(glview);
     }
 
@@ -37,7 +36,7 @@ bool AppDelegate::applicationDidFinishLaunching() {
     director->setDisplayStats(true);
 
     // set FPS. the default value is 1.0/60 if you don't call this
-    director->setAnimationInterval(1.0 / 60);
+    director->setAnimationInterval(1.0f / 60);
 
     FileUtils::getInstance()->addSearchPath("res");
 
