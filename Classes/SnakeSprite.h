@@ -9,7 +9,7 @@ public:
 	virtual bool init();
 	CREATE_FUNC(Snake);
 
-	static enum DIRECTION {
+	enum DIRECTION {
 		UP, LEFT, DOWN, RIGHT
 	};
 

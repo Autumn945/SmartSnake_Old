@@ -6,7 +6,7 @@ Vec2 MyUtility::origin;
 
 string MyUtility::get_UTF8_string(string key) {
 	if (value_map.count(key) == 0) {
-		log("key %s have not defined!", key.c_str());
+		log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! key %s have not defined!", key.c_str());
 		key = "undefinition";
 	}
 	auto ret = value_map[key].asString();
@@ -18,7 +18,7 @@ string MyUtility::get_UTF8_string(string key) {
 
 int MyUtility::get_int(string key) {
 	if (value_map.count(key) == 0) {
-		log("key %s have not defined!", key.c_str());
+		log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! key %s have not defined!", key.c_str());
 		return 0;
 	}
 	auto ret = value_map[key].asInt();
@@ -27,7 +27,7 @@ int MyUtility::get_int(string key) {
 
 float MyUtility::get_float(string key) {
 	if (value_map.count(key) == 0) {
-		log("key %s have not defined!", key.c_str());
+		log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! key %s have not defined!", key.c_str());
 		return 0;
 	}
 	auto ret = value_map[key].asFloat();
@@ -35,7 +35,7 @@ float MyUtility::get_float(string key) {
 }
 double MyUtility::get_double(string key) {
 	if (value_map.count(key) == 0) {
-		log("key %s have not defined!", key.c_str());
+		log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! key %s have not defined!", key.c_str());
 		return 0;
 	}
 	auto ret = value_map[key].asDouble();
@@ -45,7 +45,7 @@ double MyUtility::get_double(string key) {
 bool MyUtility::init() {
 	value_map = FileUtils::getInstance()->getValueMapFromFile("value_map.xml");
 	if (value_map.size() == 0) {
-		log("getValueMapFromFile value_map.xml failed");
+		log("!!!!!!!!!!!!!!!!!!getValueMapFromFile value_map.xml failed");
 		return false;
 	}
 	visible_size = Director::getInstance()->getVisibleSize();

@@ -31,6 +31,13 @@ bool HelloWorld::init()
 	log("Start = %s.", MyUtility::get_UTF8_string("Start").c_str());
 	schedule(schedule_selector(HelloWorld::delay_call), 0, 0, SCENE_TURN_DELAY);
 
+	Director::getInstance()->getTextureCache()->addImage(STRING("file_wall"));
+	Director::getInstance()->getTextureCache()->addImage(STRING("file_hole"));
+	Director::getInstance()->getTextureCache()->addImage(STRING("file_players_head"));
+	Director::getInstance()->getTextureCache()->addImage(STRING("file_players_body"));
+	Director::getInstance()->getTextureCache()->addImage(STRING("file_players_body_turn"));
+	Director::getInstance()->getTextureCache()->addImage(STRING("file_players_tail"));
+
     return true;
 }
 

@@ -37,12 +37,11 @@ bool Option::init() {
 	CREATE_MENU_ITEM_WITH_NAME(menu_back_to_main_menu);
 	menu_back_to_main_menu->setAnchorPoint(Vec2(1, 0));
 	menu_back_to_main_menu->setPosition(MyUtility::origin.x + MyUtility::visible_size.width, MyUtility::origin.y);
-	menu = Menu::create(menu_back_to_main_menu, NULL);
+	auto menu = Menu::create(menu_back_to_main_menu, NULL);
 	menu->setAnchorPoint(Vec2::ZERO);
 	menu->setPosition(Vec2::ZERO);
 	this->addChild(menu);
 	log("add menu finished");
-
 	auto top_label = LabelTTF::create(STRING(this->getName()), "Arial", TOP_LABEL_FONT_SIZE);
 	top_label->setAnchorPoint(Vec2(0.5, 1));
 	top_label->setPosition(MyUtility::origin.x + MyUtility::visible_size.width / 2

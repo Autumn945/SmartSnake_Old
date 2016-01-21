@@ -38,7 +38,6 @@ bool MainMenu::init() {
 	//(0.5, 1 - 0.618)
 	position = Vec2(MyUtility::origin.x + MyUtility::visible_size.width / 2
 		, MyUtility::origin.y + MyUtility::visible_size.height * (1 - 0.618));
-	log("position = %f, %f", position.x, position.y);
 
 	//main menu
 	CREATE_MENU_ITEM_WITH_NAME(menu_start);
@@ -62,7 +61,6 @@ bool MainMenu::init() {
 	for (auto m : vector_menu) {
 		menu_item_width = max(menu_item_width, m->getContentSize().width);
 	}
-	log("width = %f", menu_item_width);
 
 	//add turn menu
 	CREATE_MENU_ITEM_WITH_NAME(menu_turn_left);
@@ -99,7 +97,6 @@ bool MainMenu::init() {
 bool MainMenu::deal_with_event(string event_name) {
 	if (event_name == "menu_turn_left") {
 		log("menu_turn_left!");
-		log("menu_id = %d", menu_id);
 		//get action of turn menu
 		CREATE_MAIN_MENU_ACTIONS;
 
@@ -125,7 +122,6 @@ bool MainMenu::deal_with_event(string event_name) {
 	}
 	if (event_name == "menu_turn_right") {
 		log("menu_turn_right!");
-		log("menu_id = %d", menu_id);
 		//get action of turn menu
 		CREATE_MAIN_MENU_ACTIONS;
 
@@ -147,7 +143,6 @@ bool MainMenu::deal_with_event(string event_name) {
 		vector_menu[menu_id]->setVisible(false);
 		//run action
 		vector_menu[menu_id]->runAction(turn_mid);
-		log("menu_id = %d", menu_id);
 		return true;
 	}
 	if (event_name == "menu_start") {

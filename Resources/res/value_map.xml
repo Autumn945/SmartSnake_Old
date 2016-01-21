@@ -59,9 +59,9 @@
     <key>default_menu_font_size</key>
     <integer>48</integer>
     <key>game_width</key>
-    <integer>30</integer>
+    <integer>31</integer>
     <key>game_height</key>
-    <integer>20</integer>
+    <integer>19</integer>
 
     <!--default string-->
     <key>undefinition</key>

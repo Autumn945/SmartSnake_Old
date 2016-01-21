@@ -10,6 +10,5 @@ public:
 	static Option* create(string name);
 
 	bool deal_with_event(string event_name);
-	Menu *menu;
 };
 

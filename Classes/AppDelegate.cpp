@@ -18,7 +18,7 @@ bool AppDelegate::applicationDidFinishLaunching() {
     auto director = Director::getInstance();
     auto glview = director->getOpenGLView();
     if(!glview) {
-        glview = GLViewImpl::createWithRect("SmartSnake", Rect(0, 0, 1280 / 3.0f, 720 / 3.0f));
+        glview = GLViewImpl::createWithRect("SmartSnake", Rect(0, 0, 1280 * 0.5f, 720 * 0.5f));
         director->setOpenGLView(glview);
     }
 
