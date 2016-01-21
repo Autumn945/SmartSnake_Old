@@ -2,14 +2,6 @@
 
 USING_NS_CC;
 
-AppDelegate::AppDelegate() {
-
-}
-
-AppDelegate::~AppDelegate() 
-{
-}
-
 //if you want a different context,just modify the value of glContextAttrs
 //it will takes effect on all platforms
 void AppDelegate::initGLContextAttrs()
@@ -26,17 +18,17 @@ bool AppDelegate::applicationDidFinishLaunching() {
     auto director = Director::getInstance();
     auto glview = director->getOpenGLView();
     if(!glview) {
-        glview = GLViewImpl::createWithRect("SmartSnake", Rect(0, 0, 960 / 2, 640 / 2));
+        glview = GLViewImpl::createWithRect("SmartSnake", Rect(0, 0, 1280 / 3.0f, 720 / 3.0f));
         director->setOpenGLView(glview);
     }
 
-    director->getOpenGLView()->setDesignResolutionSize(960, 640, ResolutionPolicy::SHOW_ALL);
+    director->getOpenGLView()->setDesignResolutionSize(1280, 720, ResolutionPolicy::SHOW_ALL);
 
     // turn on display FPS
     director->setDisplayStats(true);
 
     // set FPS. the default value is 1.0/60 if you don't call this
-    director->setAnimationInterval(1.0f / 60);
+    director->setAnimationInterval(1.0f / 20);
 
     FileUtils::getInstance()->addSearchPath("res");
 

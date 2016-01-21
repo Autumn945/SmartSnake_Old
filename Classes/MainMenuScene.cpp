@@ -1,17 +1,31 @@
 #include "MainMenuScene.h"
+
+#define CREATE_MAIN_MENU_ACTIONS \
+	auto ac_rotate_to_n90 = RotateTo::create(MAIN_MENU_TURN_TIME, Vec3(0, -90, 0));\
+	auto ac_rotate_to_90 = RotateTo::create(MAIN_MENU_TURN_TIME, Vec3(0, 90, 0));\
+	auto ac_rotate_to_0 = RotateTo::create(MAIN_MENU_TURN_TIME, Vec3(0, 0, 0));\
+	auto ac_fade_out = FadeOut::create(MAIN_MENU_TURN_TIME);\
+	auto ac_fade_in = FadeIn::create(MAIN_MENU_TURN_TIME);\
+	auto ac_move_to_mid = MoveTo::create(MAIN_MENU_TURN_TIME, position);\
+	auto ac_move_to_left = MoveTo::create(MAIN_MENU_TURN_TIME, position - Vec2(menu_item_width / 2, 0));\
+	auto ac_move_to_right = MoveTo::create(MAIN_MENU_TURN_TIME, position + Vec2(menu_item_width / 2, 0));\
+	auto turn_right = Sequence::create(Spawn::create(ac_rotate_to_90, ac_move_to_right, ac_fade_out, NULL), CallFuncN::create([](Ref *sender) {\
+		((Node *)sender)->setVisible(false);\
+	}), NULL);\
+	auto turn_mid = Sequence::create(CallFuncN::create([](Ref *sender) {\
+		((Node *)sender)->setVisible(true);\
+	}), Spawn::create(ac_rotate_to_0, ac_move_to_mid, ac_fade_in, NULL), NULL);\
+	auto turn_left = Sequence::create(Spawn::create(ac_rotate_to_n90, ac_move_to_left, ac_fade_out, NULL), CallFuncN::create([](Ref *sender) {\
+		((Node *)sender)->setVisible(false);\
+	}), NULL)
+
 USING_NS_CC;
+using namespace std;
 
 Scene* MainMenu::createScene() {
-	// 'scene' is an autorelease object
 	auto scene = Scene::create();
-
-	// 'layer' is an autorelease object
 	auto layer = MainMenu::create();
-
-	// add layer as a child to scene
 	scene->addChild(layer);
-
-	// return the scene
 	return scene;
 }
 
@@ -20,53 +34,52 @@ bool MainMenu::init() {
 		return false;
 	}
 
-	log("MainMenu init");
+	log("MainMenu"" init");
 	//(0.5, 1 - 0.618)
 	position = Vec2(MyUtility::origin.x + MyUtility::visible_size.width / 2
 		, MyUtility::origin.y + MyUtility::visible_size.height * (1 - 0.618));
 	log("position = %f, %f", position.x, position.y);
 
 	//main menu
-	CREATE_MANE_ITEM(menu_start);
-	CREATE_MANE_ITEM(menu_setting);
-	CREATE_MANE_ITEM(menu_about);
-	CREATE_MANE_ITEM(menu_feedback);
-	CREATE_MANE_ITEM(menu_exit);
+	CREATE_MENU_ITEM_WITH_NAME(menu_start);
+	CREATE_MENU_ITEM_WITH_NAME(menu_option_setting);
+	CREATE_MENU_ITEM_WITH_NAME(menu_option_help);
+	CREATE_MENU_ITEM_WITH_NAME(menu_option_about);
+	CREATE_MENU_ITEM_WITH_NAME(menu_option_feedback);
+	CREATE_MENU_ITEM_WITH_NAME(menu_exit);
 
 	//add into a vector
 	vector_menu.clear();
 	vector_menu.push_back(menu_start);
-	vector_menu.push_back(menu_setting);
-	vector_menu.push_back(menu_about);
-	vector_menu.push_back(menu_feedback);
+	vector_menu.push_back(menu_option_setting);
+	vector_menu.push_back(menu_option_help);
+	vector_menu.push_back(menu_option_about);
+	vector_menu.push_back(menu_option_feedback);
 	vector_menu.push_back(menu_exit);
 
 	//get max content width
-	width = vector_menu[0]->getContentSize().width;
+	menu_item_width = vector_menu[0]->getContentSize().width;
 	for (auto m : vector_menu) {
-		width = max(width, m->getContentSize().width);
+		menu_item_width = max(menu_item_width, m->getContentSize().width);
 	}
-	log("width = %f", width);
+	log("width = %f", menu_item_width);
 
 	//add turn menu
-	CREATE_MANE_ITEM(menu_turn_left);
-	CREATE_MANE_ITEM(menu_turn_right);
+	CREATE_MENU_ITEM_WITH_NAME(menu_turn_left);
+	CREATE_MENU_ITEM_WITH_NAME(menu_turn_right);
 
 	//create menu
 	auto menu = Menu::create(menu_turn_left, menu_turn_right, NULL);
 	menu->setPosition(Vec2::ZERO);
 	menu->setAnchorPoint(Vec2::ZERO);
 
-	menu_turn_left->setPosition(position - Vec2(width / 2 + menu_turn_left->getContentSize().width / 2, 0));
-	menu_turn_right->setPosition(position + Vec2(width / 2 + menu_turn_right->getContentSize().width / 2, 0));
+	menu_turn_left->setPosition(position - Vec2(menu_item_width / 2 + menu_turn_left->getContentSize().width / 2, 0));
+	menu_turn_right->setPosition(position + Vec2(menu_item_width / 2 + menu_turn_right->getContentSize().width / 2, 0));
 	this->addChild(menu);
 
 	//init all menu itme
 	for (auto m : vector_menu) {
 		menu->addChild(m);
-		m->setPosition(position + Vec2(width / 2, 0));
-		m->setRotation3D(Vec3(0, 90, 0));
-		m->setOpacity(0);
 		m->setVisible(false);
 	}
 
@@ -74,14 +87,17 @@ bool MainMenu::init() {
 	CREATE_MAIN_MENU_ACTIONS;
 
 	menu_id = 0;
-	//run actions
-	vector_menu[menu_id]->runAction(turn_mid);
+	//init menu item
+	vector_menu[menu_id]->setPosition(position);
+	vector_menu[menu_id]->setRotation3D(Vec3(0, 0, 0));
+	vector_menu[menu_id]->setOpacity(255);
+	vector_menu[menu_id]->setVisible(true);
 
 	return true;
 }
 
-void MainMenu::deal_menu_event(string menu) {
-	if (menu == "menu_turn_left") {
+bool MainMenu::deal_with_event(string event_name) {
+	if (event_name == "menu_turn_left") {
 		log("menu_turn_left!");
 		log("menu_id = %d", menu_id);
 		//get action of turn menu
@@ -99,15 +115,15 @@ void MainMenu::deal_menu_event(string menu) {
 		menu_id = (menu_id + 1) % vector_menu.size();
 		//init menu item
 		vector_menu[menu_id]->stopAllActions();
-		vector_menu[menu_id]->setPosition(position + Vec2(width / 2, 0));
+		vector_menu[menu_id]->setPosition(position + Vec2(menu_item_width / 2, 0));
 		vector_menu[menu_id]->setRotation3D(Vec3(0, 90, 0));
 		vector_menu[menu_id]->setOpacity(100);
 		vector_menu[menu_id]->setVisible(false);
 		//run action
 		vector_menu[menu_id]->runAction(turn_mid);
-		return;
+		return true;
 	}
-	if (menu == "menu_turn_right") {
+	if (event_name == "menu_turn_right") {
 		log("menu_turn_right!");
 		log("menu_id = %d", menu_id);
 		//get action of turn menu
@@ -125,17 +141,27 @@ void MainMenu::deal_menu_event(string menu) {
 		menu_id = (menu_id - 1 + vector_menu.size()) % vector_menu.size();
 		//init menu item
 		vector_menu[menu_id]->stopAllActions();
-		vector_menu[menu_id]->setPosition(position - Vec2(width / 2, 0));
+		vector_menu[menu_id]->setPosition(position - Vec2(menu_item_width / 2, 0));
 		vector_menu[menu_id]->setRotation3D(Vec3(0, -90, 0));
 		vector_menu[menu_id]->setOpacity(100);
 		vector_menu[menu_id]->setVisible(false);
 		//run action
 		vector_menu[menu_id]->runAction(turn_mid);
 		log("menu_id = %d", menu_id);
-		return;
+		return true;
 	}
-	if (menu == "menu_exit") {
-		Director::getInstance()->end();
-		return;
+	if (event_name == "menu_start") {
+		TURN_TO_NEXT_SCENE_WITH_NAME(MyGame);
+		return true;
 	}
+	if (event_name.find("option") < event_name.length()) {
+		auto next_scene = Option::createScene(event_name);
+		auto Transition_scene = TransitionCrossFade::create(SCENE_TURN_TRANSITION_TIME, next_scene);
+		Director::getInstance()->replaceScene(Transition_scene);
+		return true;
+	}
+	if (MyUtility::deal_with_event(event_name)) {
+		return true;
+	}
+	return false;
 }

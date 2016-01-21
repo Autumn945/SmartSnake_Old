@@ -1,14 +1,14 @@
 #pragma once
 #include "SystemHeader.h"
 
+
 USING_NS_CC;
 using namespace std;
-class HelloWorld : public Layer {
+class MyGame : public Layer {
 public:
 	static Scene* createScene();
 	virtual bool init();
-	CREATE_FUNC(HelloWorld);
+	CREATE_FUNC(MyGame);
 
-	void delay_call(float dt);
 };
 
