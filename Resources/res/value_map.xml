@@ -26,8 +26,10 @@
     <string>  &gt;  </string>
 
     <!--file name strings-->
+    <!--backgroud-->
     <key>file_helloworld</key>
     <string>HelloWorld.png</string>
+    <!--snake-->
     <key>file_players_head</key>
     <string>head_up.png</string>
     <key>file_players_body</key>
@@ -36,10 +38,22 @@
     <string>body_left_down.png</string>
     <key>file_players_tail</key>
     <string>tail_up.png</string>
+    <!--map unit-->
     <key>file_hole</key>
     <string>hole_empty.png</string>
     <key>file_wall</key>
     <string>wall.png</string>
+    <key>file_grass</key>
+    <string>grass.png</string>
+    <!--control-->
+    <key>file_turn_left_control</key>
+    <string>turn_left.png</string>
+    <key>file_turn_left_control_s</key>
+    <string>turn_left_s.png</string>
+    <key>file_turn_right_back_control</key>
+    <string>turn_back.png</string>
+    <key>file_turn_right_back_control_s</key>
+    <string>turn_back_s.png</string>
 
     <!--system constant float-->
     <key>main_menu_turn_time</key>
