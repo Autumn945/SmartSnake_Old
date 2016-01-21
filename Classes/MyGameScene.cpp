@@ -14,5 +14,7 @@ bool MyGame::init() {
 	if (!Layer::init()) {
 		return false;
 	}
+	auto game = GameNode::create();
+	this->addChild(game);
 	return true;
 }

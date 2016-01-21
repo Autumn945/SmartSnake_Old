@@ -43,3 +43,5 @@
 #include "StorageScene.h"
 #include "OptionScene.h"
 #include "MyGameScene.h"
+#include "GameNode.h"
+#include "SnakeSprite.h"

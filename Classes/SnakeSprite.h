@@ -4,7 +4,7 @@
 
 USING_NS_CC;
 using namespace std;
-class Snake : public Node {
+class Snake : public Sprite {
 public:
 	virtual bool init();
 	CREATE_FUNC(Snake);

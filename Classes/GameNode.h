@@ -8,13 +8,12 @@ public:
 	virtual bool init();
 	CREATE_FUNC(GameNode);
 
-	static enum MAP_UNIT {
-		SNAKE, WALL, GRASS
-	};
 	CC_SYNTHESIZE(int, width, _width);
 	CC_SYNTHESIZE(int, height, _height);
 	CC_SYNTHESIZE_READONLY(int, unit, _unit);
 
-	vector<MAP_UNIT> *mp;
+	bool **map_wall;
+	bool **map_grass;
+	bool **map_hole;
 };
 
