@@ -36,8 +36,8 @@ bool MainMenu::init() {
 
 	log("MainMenu"" init");
 	//(0.5, 1 - 0.618)
-	position = Vec2(MyUtility::origin.x + MyUtility::visible_size.width / 2
-		, MyUtility::origin.y + MyUtility::visible_size.height * (1 - 0.618));
+	position = Vec2(origin.x + visible_size.width / 2
+		, origin.y + visible_size.height * (1 - 0.618));
 
 	//main menu
 	CREATE_MENU_ITEM_WITH_NAME(menu_start);
@@ -155,8 +155,6 @@ bool MainMenu::deal_with_event(string event_name) {
 		Director::getInstance()->replaceScene(Transition_scene);
 		return true;
 	}
-	if (MyUtility::deal_with_event(event_name)) {
-		return true;
-	}
+	DEAL_WITH_EVENT;
 	return false;
 }

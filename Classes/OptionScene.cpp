@@ -36,16 +36,16 @@ bool Option::init() {
 	log("init option");
 	CREATE_MENU_ITEM_WITH_NAME(menu_back_to_main_menu);
 	menu_back_to_main_menu->setAnchorPoint(Vec2(1, 0));
-	menu_back_to_main_menu->setPosition(MyUtility::origin.x + MyUtility::visible_size.width, MyUtility::origin.y);
+	menu_back_to_main_menu->setPosition(origin.x + visible_size.width, origin.y);
 	auto menu = Menu::create(menu_back_to_main_menu, NULL);
 	menu->setAnchorPoint(Vec2::ZERO);
 	menu->setPosition(Vec2::ZERO);
 	this->addChild(menu);
 	log("add menu finished");
-	auto top_label = LabelTTF::create(STRING(this->getName()), "Arial", TOP_LABEL_FONT_SIZE);
+	auto top_label = Label::createWithSystemFont(get_UTF8_string(this->getName()), "Arial", TOP_LABEL_FONT_SIZE);
 	top_label->setAnchorPoint(Vec2(0.5, 1));
-	top_label->setPosition(MyUtility::origin.x + MyUtility::visible_size.width / 2
-		, MyUtility::origin.y + MyUtility::visible_size.height); 
+	top_label->setPosition(origin.x + visible_size.width / 2
+		, origin.y + visible_size.height); 
 	this->addChild(top_label);
 	if (this->getName() == "menu_option_setting") {
 		return true;
@@ -65,8 +65,6 @@ bool Option::init() {
 }
 
 bool Option::deal_with_event(string event_name) {
-	if (MyUtility::deal_with_event(event_name)) {
-		return true;
-	}
+	DEAL_WITH_EVENT;
 	return false;
 }

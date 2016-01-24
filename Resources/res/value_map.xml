@@ -33,11 +33,19 @@
     <key>file_players_head</key>
     <string>head_up.png</string>
     <key>file_players_body</key>
-    <string>body_up_down.png</string>
+    <string>body_up.png</string>
     <key>file_players_body_turn</key>
-    <string>body_left_down.png</string>
+    <string>body_turn_right.png</string>
     <key>file_players_tail</key>
     <string>tail_up.png</string>
+    <key>file_players_body_half_0</key>
+    <string>body_up_half_0.png</string>
+    <key>file_players_body_turn_half_0</key>
+    <string>body_turn_right_half_0.png</string>
+    <key>file_players_body_half_1</key>
+    <string>body_up_half_1.png</string>
+    <key>file_players_body_turn_half_1</key>
+    <string>body_turn_right_half_1.png</string>
     <!--map unit-->
     <key>file_hole</key>
     <string>hole_empty.png</string>
