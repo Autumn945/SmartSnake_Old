@@ -5,10 +5,7 @@ using namespace std;
 
 Option* Option::create(string name) {
 	Option *pRet = new(std::nothrow) Option();
-	if (pRet) {
-		pRet->setName(name);
-	}
-	if (pRet && pRet->init()) {
+	if (pRet && (pRet->setName(name), pRet->init())) {
 		pRet->autorelease();
 		return pRet;
 	}
@@ -22,7 +19,12 @@ Option* Option::create(string name) {
 Scene* Option::createScene(string name) {
 	auto scene = Scene::create();
 	auto layer = Option::create(name);
-	scene->addChild(layer);
+	if (layer == NULL) {
+		log("layer of Option creating failed!");
+	}
+	else {
+		scene->addChild(layer);
+	}
 	return scene;
 }
 
@@ -33,38 +35,38 @@ bool Option::init() {
 		return false;
 	}
 	//add menu back_to_main_menu
-	log("init option");
-	CREATE_MENU_ITEM_WITH_NAME(menu_back_to_main_menu);
-	menu_back_to_main_menu->setAnchorPoint(Vec2(1, 0));
-	menu_back_to_main_menu->setPosition(origin.x + visible_size.width, origin.y);
-	auto menu = Menu::create(menu_back_to_main_menu, NULL);
+	auto menu_back = MenuItemFont::create(get_UTF8_string("back"), [](Ref *sender) {
+		auto next_scene = MainMenu::createScene(); 
+		auto Transition_scene = TransitionCrossFade::create(SCENE_TURN_TRANSITION_TIME, next_scene); 
+		Director::getInstance()->replaceScene(Transition_scene);
+	});
+	menu_back->setAnchorPoint(Vec2(1, 0));
+	menu_back->setPosition(origin.x + visible_size.width, origin.y);
+	//create menu item
+	auto menu = Menu::create(menu_back, NULL);
 	menu->setAnchorPoint(Vec2::ZERO);
 	menu->setPosition(Vec2::ZERO);
 	this->addChild(menu);
-	log("add menu finished");
+	//create top label
 	auto top_label = Label::createWithSystemFont(get_UTF8_string(this->getName()), "Arial", TOP_LABEL_FONT_SIZE);
 	top_label->setAnchorPoint(Vec2(0.5, 1));
 	top_label->setPosition(origin.x + visible_size.width / 2
 		, origin.y + visible_size.height); 
 	this->addChild(top_label);
-	if (this->getName() == "menu_option_setting") {
+	// set context
+	if (this->getName() == "setting") {
 		return true;
 	}
-	if (this->getName() == "menu_option_help") {
+	if (this->getName() == "help") {
 		return true;
 	}
-	if (this->getName() == "menu_option_about") {
+	if (this->getName() == "about") {
 		return true;
 	}
-	if (this->getName() == "menu_option_feedback") {
+	if (this->getName() == "feedback") {
 		return true;
 	}
 	//debug
 	return true;
-	return false;
-}
-
-bool Option::deal_with_event(string event_name) {
-	DEAL_WITH_EVENT;
 	return false;
 }

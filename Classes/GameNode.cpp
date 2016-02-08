@@ -2,146 +2,107 @@
 
 USING_NS_CC;
 
+TMXTiledMap* GameNode::tile_map;
+set<Sprite*>** GameNode::snake_map;
+mp_pii_pii* GameNode::hole_map;
+
+GameNode::~GameNode() {
+	delete player;
+	delete AI;
+	delete hole_map;
+	for (int i = 0; i < game_width; i++) {
+		delete[] snake_map[i];
+	}
+	delete[] snake_map;
+	log("deleted a GameNode");
+}
+
 bool GameNode::init() {
 	if (!Node::init()) {
 		return false;
 	}
-	log("game node init");
+	log("GameNode init");
+	this->setColor(Color3B::RED);
+	player = new(nothrow) vector<Snake*>();
+	AI = new(nothrow) vector<Snake*>();
 
-	//create node game
-	width = get_int("game_width");
-	height = get_int("game_height");
-	this->setContentSize(Size(UNIT * width, UNIT * height));
+	this->setContentSize(Size(UNIT * game_width, UNIT * game_height));
 	this->setAnchorPoint(Vec2(0, 1));
-	this->setPosition(Vec2(origin.x, origin.y + visible_size.height) + Vec2(UNIT / 2, UNIT / 2));
-	log("set position finished");
-	wall = SpriteBatchNode::create(get_UTF8_string("file_wall"));
-	wall->setAnchorPoint(Vec2(0, 0));
-	wall->setPosition(Vec2(0, 0));
-	grass = SpriteBatchNode::create(get_UTF8_string("file_grass"));
-	grass->setAnchorPoint(Vec2(0, 0));
-	grass->setPosition(Vec2(0, 0));
-	hole = SpriteBatchNode::create(get_UTF8_string("file_hole"));
-	hole->setAnchorPoint(Vec2(0, 0));
-	hole->setPosition(Vec2(0, 0));
-	this->addChild(wall, wall_order);
-	this->addChild(grass, grass_order);
-	this->addChild(hole, hole_order);
-	log("add child finished");
-	map_wall = new bool*[width];
-	map_grass = new bool*[width];
-	map_hole = new bool*[width];
-	map_snake = new bool*[width];
-	for (int i = 0; i < width; i++) {
-		map_wall[i] = new bool[height]();
-		map_grass[i] = new bool[height]();
-		map_hole[i] = new bool[height]();
-		map_snake[i] = new bool[height]();
-	}
-	log("new map unit finished");
-	for (int i = 0; i < width; i++) {
-		map_wall[i][0] = map_wall[i][height - 1] = true;
-	}
-	for (int i = 0; i < height; i++) {
-		map_wall[0][i] = map_wall[width - 1][i] = true;
-	}
-	log("wall finished");
-	map_hole[0][height / 2] = map_hole[width - 1][height / 2] = true;
-	map_hole[width / 2][0] = map_hole[width / 2][height - 1] = true;
+	this->setPosition(Vec2(origin.x, origin.y + visible_size.height));
 
-	player = new Snake(0, height / 2, DIRECTION::RIGHT);
-	player->set_add_speed(3);
+	snake_map = new(nothrow) set<Sprite*>*[game_width]();
+	for (int i = 0; i < game_width; i++) {
+		snake_map[i] = new(nothrow) set<Sprite*>[game_height]();
+	}
 
-	for (int i = 0; i < 100; i++) {
-		int x = random(1, width - 2);
-		int y = random(1, height - 2);
-		map_grass[x][y] = true;
+	hole_map = new(nothrow) mp_pii_pii();
+	tile_map = TMXTiledMap::create("0.tmx");
+	if (tile_map == NULL) {
+		log("0.tmx has not found!");
+		return false;
 	}
-	for (int i = 0; i < 30; i++) {
-		int x = random(1, width - 2);
-		int y = random(1, height - 2);
-		map_wall[x][y] = true;
+	if (tile_map->getLayer("wall") == NULL) {
+		log("layer wall of tile_map has not found!");
 	}
-	log("map init finished");
-	this->draw_unit();
-	scheduleUpdate();
+	tile_map->setAnchorPoint(Vec2::ZERO);
+	tile_map->setPosition(Vec2::ZERO);
+	if (tile_map->getLayer("grass") == NULL) {
+		log("layer grass of tile_map has not found!");
+	}
+	else {
+		tile_map->getLayer("grass")->setLocalZOrder(1);
+	}
+	this->addChild(tile_map);
+
+	auto hole_obj_group = tile_map->getObjectGroup("hole_objs");
+	if (hole_obj_group == NULL) {
+		log("object hole_objs of tile_map has not found!");
+		return false;
+	}
+	auto hole_objs = hole_obj_group->getObjects();
+	for (auto _hole : hole_objs) {
+		auto hole = _hole.asValueMap();
+		auto pos = to_tile_map_pos(Vec2(hole["x"].asFloat(), hole["y"].asFloat()));
+		if (hole.count("to") == 0) {
+			log("property \"to\" of hole %s has not found!", hole["name"].asString().c_str());
+			continue;
+		}
+		auto to_hole = hole_obj_group->getObject(hole["to"].asString());
+		if (to_hole.size() == 0) {
+			log("hole %s has not found!", hole["to"].asString().c_str());
+			continue;
+		}
+		auto to = to_tile_map_pos(Vec2(to_hole["x"].asFloat(), to_hole["y"].asFloat()));
+		(*hole_map)[pos] = to;
+	}
+
+
+	auto snake_obj_group = tile_map->getObjectGroup("snake_objs");
+	if (snake_obj_group == NULL) {
+		log("!!!!!!!!!!!!!!!!!!!!snake_objs has not defined!");
+		return false;
+	}
+	auto snake_objs = snake_obj_group->getObjects();
+	for (auto _snake : snake_objs) {
+		auto snake = _snake.asValueMap();
+		auto sp = Snake::create(snake);
+		if (snake["type"].asString() == "player") {
+			player->push_back(sp);
+		}
+		else {
+			AI->push_back(sp);
+		}
+		tile_map->addChild(sp);
+	}
+
+	schedule([this](float dt) {
+		for (auto snk : *player) {
+			snk->go_ahead();
+		}
+		for (auto snk : *player) {
+			snk->check();
+		}
+	}, "update");
+
 	return true;
-}
-
-void GameNode::draw_unit() {
-	log("draw grass");
-	for (int i = 0; i < width; i++) {
-		for (int j = 0; j < height; j++) {
-			if (map_grass[i][j]) {
-				auto grass_unit = Sprite::create(get_UTF8_string("file_grass"));
-				grass_unit->setPosition(Vec2(i * UNIT, j * UNIT));
-				grass->addChild(grass_unit);
-			}
-		}
-	}
-	log("draw hole");
-	for (int i = 0; i < width; i++) {
-		for (int j = 0; j < height; j++) {
-			if (map_hole[i][j]) {
-				map_wall[i][j] = false;
-				auto hole_unit = Sprite::create(get_UTF8_string("file_wall"));
-				hole_unit->setPosition(Vec2(i * UNIT, j * UNIT));
-				hole->addChild(hole_unit);
-			}
-		}
-	}
-	log("draw wall");
-	for (int i = 0; i < width; i++) {
-		for (int j = 0; j < height; j++) {
-			if (map_wall[i][j]) {
-				auto wall_unit = Sprite::create(get_UTF8_string("file_wall"));
-				wall_unit->setPosition(Vec2(i * UNIT, j * UNIT));
-				wall_unit->setRotation(random(0, 3) * 90);
-				wall->addChild(wall_unit);
-			}
-		}
-	}
-}
-
-void GameNode::draw_snake(Snake * snake) {
-	while (!snake->get_add_cache()->empty() && snake->get_add_cache()->front()->type != Snake::SnakeNodeType::unknown) {
-		auto node = snake->get_add_cache()->front();
-		if (node->x >= 0 && node->x < width && node->y >= 0 && node->y < height) {
-			map_snake[node->x][node->y] = true;
-			log("draw at (%d, %d)", node->x, node->y);
-		}
-		Sprite *sp = NULL;
-		switch (node->type) {
-		case Snake::SnakeNodeType::body:
-			sp = Sprite::create(get_UTF8_string("file_players_body"));
-			break;
-		case Snake::SnakeNodeType::body_turn_left:
-			sp = Sprite::create(get_UTF8_string("file_players_body_turn"));
-			sp->setFlippedX(true);
-			break;
-		case Snake::SnakeNodeType::body_turn_right:
-			sp = Sprite::create(get_UTF8_string("file_players_body_turn"));
-			break;
-		default:
-			break;
-		}
-		if (sp) {
-			sp->setTag(get_tag_of_point(node->x, node->y));
-			sp->setPosition(Vec2(node->x, node->y) * UNIT);
-			sp->setRotation(node->dir * 90);
-			this->addChild(sp);
-		}
-		snake->get_add_cache()->pop();
-	}
-}
-
-void GameNode::update(float dt) {
-	Node::update(dt);
-	log("GameNode updating~~");
-	player->update(dt);
-	draw_snake(player);
-}
-
-int GameNode::get_tag_of_point(int x, int y) {
-	return x * height + y;
 }

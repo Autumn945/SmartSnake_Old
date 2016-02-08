@@ -1,39 +1,40 @@
 #include "SystemHeader.h"
 
-ValueMap value_map;
+const float EPS = (float)(1e-4);
+const float SCENE_TURN_DELAY = 0.2f;
+const float MAIN_MENU_TURN_TIME = 0.4f;
+const float SCENE_TURN_TRANSITION_TIME = 0.3f;
+
+const int DIR_MASK = 3;
+const int UNIT = 32;
+const int TOP_LABEL_FONT_SIZE = 68;
+const int DEFAULT_LABEL_FONT_SIZE = 30;
+const int DEFAULT_MENU_FONT_SIZE = 48;
+const int game_width = 31;
+const int game_height = 19;
+
+// origin is the left-up corner
+// 0->up, 1->right, 2->down, 3->right
+const pii dir_vector[4] = { pii(0, -1), pii(1, 0), pii(0, 1), pii(-1, 0) };
+
+// string to chinese characters
+ValueMap UTF8_string;
 Size visible_size;
 Vec2 origin;
 
-int UNIT;
-float MAIN_MENU_TURN_TIME;
-float SCENE_TURN_DELAY;
-float SCENE_TURN_TRANSITION_TIME;
-int TOP_LABEL_FONT_SIZE;
-int DEFAULT_MENU_FONT_SIZE;
-int DEFAULT_LABEL_FONT_SIZE;
-
-
 bool init() {
-	log("init!");
-	value_map = FileUtils::getInstance()->getValueMapFromFile("value_map.xml");
-	log("init 2");
-	if (value_map.size() == 0) {
-		log("!!!!!!!!!!!!!!!!!!getValueMapFromFile value_map.xml failed");
+	UTF8_string = FileUtils::getInstance()->getValueMapFromFile("UTF8_string.xml");
+	if (UTF8_string.size() == 0) {
+		log("!!!!!!!!!!!!!!!!!! size of UTF8_string is 0");
 		return false;
 	}
+	
 	visible_size = Director::getInstance()->getVisibleSize();
 	origin = Director::getInstance()->getVisibleOrigin();
-	UNIT = get_int("unit");
-	MAIN_MENU_TURN_TIME = get_float("main_menu_turn_time");
-	SCENE_TURN_DELAY = get_float("scene_turn_delay");
-	SCENE_TURN_TRANSITION_TIME = get_float("scene_turn_transition_time");
-	TOP_LABEL_FONT_SIZE = get_int("top_label_font_size");
-	DEFAULT_MENU_FONT_SIZE = get_int("default_menu_font_size");
-	DEFAULT_LABEL_FONT_SIZE = get_int("default_label_font_size");
 	return true;
 }
 
-
+// if x < 0 return -1, if x > 0 return 1, if x = 0 return 0
 int sign(float x) {
 	if (x > EPS) {
 		return 1;
@@ -44,37 +45,21 @@ int sign(float x) {
 	return 0;
 }
 
+// get floor of float
 int float_to_int(float f) {
-	f += sign(f) * 0.5;
+	f += sign(f) * EPS;
 	return (int)f;
 }
 
-Value get_value(string key) {
+Value get_value(ValueMap &value_map, string key) {
 	if (value_map.count(key) == 0) {
 		log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! key %s have not defined!", key.c_str());
-		return Value("unknown");
+		return Value(key);
 	}
 	return value_map[key];
 }
 
+// return is string of UTF-8 string
 string get_UTF8_string(string key) {
-	auto ret = get_value(key).asString();
-	if (ret.length() == 0) {
-		ret = "undefinition";
-	}
-	return ret;
-}
-
-int get_int(string key) {
-	auto ret = get_value(key).asInt();
-	return ret;
-}
-
-float get_float(string key) {
-	auto ret = get_value(key).asFloat();
-	return ret;
-}
-double get_double(string key) {
-	auto ret = get_value(key).asDouble();
-	return ret;
+	return get_value(UTF8_string, key).asString();
 }

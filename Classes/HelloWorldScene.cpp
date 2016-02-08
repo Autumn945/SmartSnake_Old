@@ -6,43 +6,49 @@ using namespace std;
 Scene* HelloWorld::createScene() {
 	auto scene = Scene::create();
 	auto layer = HelloWorld::create();
-	scene->addChild(layer);
+	if (layer == NULL) {
+		log("layer of HelloWorld creating failed!");
+	}
+	else {
+		scene->addChild(layer);
+	}
 	return scene;
 }
 
 // on "init" you need to initialize your instance
-bool HelloWorld::init()
-{
+bool HelloWorld::init() {
 	log("helloworld init");
-    //////////////////////////////
-    // 1. super init first
+    // super init first
     if ( !Layer::init() ) {
         return false;
     }
+	// global init
 	if (!::init()) {
 		return false;
 	}
-	//create background
+	// create background
 	auto center = origin + visible_size / 2;
-	auto sp = Sprite::create(get_UTF8_string("file_helloworld"));
+	auto sp = Sprite::create("HelloWorld.png");
+	if (sp == NULL) {
+		log("HelloWorld.png has not found");
+		return false;
+	}
 	sp->setPosition(center);
 	this->addChild(sp);
-	//init default font size
+
+	// init default font size
 	MenuItemFont::setFontSize(DEFAULT_MENU_FONT_SIZE);
-	log("Start = %s.", get_UTF8_string("Start").c_str());
-	schedule(schedule_selector(HelloWorld::delay_call), 0, 0, SCENE_TURN_DELAY);
 
-	Director::getInstance()->getTextureCache()->addImage(get_UTF8_string("file_wall"));
-	Director::getInstance()->getTextureCache()->addImage(get_UTF8_string("file_hole"));
-	Director::getInstance()->getTextureCache()->addImage(get_UTF8_string("file_players_head"));
-	Director::getInstance()->getTextureCache()->addImage(get_UTF8_string("file_players_body"));
-	Director::getInstance()->getTextureCache()->addImage(get_UTF8_string("file_players_body_turn"));
-	Director::getInstance()->getTextureCache()->addImage(get_UTF8_string("file_players_tail"));
-
+	// to next scene
+	schedule([](float dt) {
+		auto next_scene = MainMenu::createScene();
+		if (next_scene == NULL) {
+			log("scene of HelloWorld creating failed!");
+			return;
+		}
+		auto Transition_scene = TransitionCrossFade::create(SCENE_TURN_TRANSITION_TIME, next_scene);
+		Director::getInstance()->replaceScene(Transition_scene);
+		log("scene replaced");
+	}, 0, 0, SCENE_TURN_DELAY, "replace scene");
     return true;
-}
-
-void HelloWorld::delay_call(float dt) {
-	TURN_TO_NEXT_SCENE_WITH_NAME(MainMenu);
-	log("scene replaced");
 }

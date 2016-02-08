@@ -33,65 +33,39 @@
 		varName += var;\
 	}
 
-
-//name is the menu and event name
-#define CREATE_MENU_ITEM_WITH_NAME(name) \
-	auto name = MenuItemFont::create(get_UTF8_string(#name), [=](Ref *sender) {\
-		log(#name);\
-		if(!deal_with_event(#name)) {\
-			log(#name"have not dealt!");\
-		}\
-	})
-
-//name is the scene class name
-#define TURN_TO_NEXT_SCENE_WITH_NAME(name) \
-	auto next_scene = name::createScene();\
-	auto Transition_scene = TransitionCrossFade::create(SCENE_TURN_TRANSITION_TIME, next_scene);\
-	Director::getInstance()->replaceScene(Transition_scene)
-
-#define DEAL_WITH_EVENT \
-	if (event_name == "menu_exit") {\
-		Director::getInstance()->end();\
-		return true;\
-	}\
-	if (event_name == "menu_back_to_main_menu") {\
-		TURN_TO_NEXT_SCENE_WITH_NAME(MainMenu);\
-		return true;\
-	}
-
-
 USING_NS_CC;
 using namespace std;
 
+typedef pair<int, int> pii;
+typedef map<pii, pii> mp_pii_pii;
+
+bool init();
+int sign(float x);
+int float_to_int(float f);
+string get_UTF8_string(string key);
 
 enum DIRECTION {
 	UP, RIGHT, DOWN, LEFT
 };
 
-extern bool init();
-extern int sign(float x);
-extern int float_to_int(float f);
-extern Value get_value(string key);
-extern string get_UTF8_string(string key);
-extern int get_int(string key);
-extern float get_float(string key);
-extern double get_double(string key);
+extern const float EPS;
+extern const float SCENE_TURN_DELAY;
+extern const float MAIN_MENU_TURN_TIME;
+extern const float SCENE_TURN_TRANSITION_TIME;
 
-const int DIR_MASK = 3;
-const float EPS = (float)(1e-4);
-const Vec2 dir_vector[4] = { Vec2(0, 1), Vec2(1, 0), Vec2(0, -1), Vec2(-1, 0)};
-extern ValueMap value_map;
+extern const int DIR_MASK;
+extern const int UNIT;
+extern const int TOP_LABEL_FONT_SIZE;
+extern const int DEFAULT_LABEL_FONT_SIZE;
+extern const int DEFAULT_MENU_FONT_SIZE;
+extern const int game_width;
+extern const int game_height;
+
+extern const pii dir_vector[4];
+
+extern ValueMap UTF8_string;
 extern Size visible_size;
 extern Vec2 origin;
-
-extern int UNIT;
-extern float MAIN_MENU_TURN_TIME;
-extern float SCENE_TURN_DELAY;
-extern float SCENE_TURN_TRANSITION_TIME;
-extern int TOP_LABEL_FONT_SIZE;
-extern int DEFAULT_MENU_FONT_SIZE;
-extern int DEFAULT_LABEL_FONT_SIZE;
-
 
 #include "MyGameScene.h"
 #include "GameNode.h"
