@@ -4,12 +4,13 @@
 using namespace std;
 USING_NS_CC;
 
-class Snake : public Node{
+class Snake : public SpriteBatchNode{
 public:
 	DEFINE_VAR_GET_SET(queue<Sprite*>*, snake_nodes);
 	DEFINE_VAR_GET(queue<DIRECTION>*, turn_list);
 	DEFINE_VAR_GET(DIRECTION, current_dir);
 	DEFINE_VAR_GET(pii, position);
+	DEFINE_VAR_GET(int, score);
 	DEFINE_VAR_GET(string, image);
 	DEFINE_VAR_GET(bool, is_dying);
 	DEFINE_VAR_GET(bool, is_died);
@@ -19,8 +20,8 @@ public:
 	DEFINE_VAR_GET_ADD(int, step);
 
 	Snake(ValueMap vm);
-	bool init();
 	~Snake();
+	virtual bool init();
 	static Snake* create(ValueMap vm);
 	int get_length();
 	bool go_ahead();

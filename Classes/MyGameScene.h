@@ -10,9 +10,7 @@ public:
 	static Scene* createScene();
 	virtual bool init();
 	CREATE_FUNC(MyGame);
-
-	Sprite *control;
-	GameNode *game;
+	DEFINE_VAR_GET(static GameNode*, game_node);
 
 	//test
 	Label *top_label;

@@ -34,10 +34,7 @@ bool AppDelegate::applicationDidFinishLaunching() {
 
     // create a scene. it's an autorelease object
     auto scene = HelloWorld::createScene();
-	if (scene == NULL) {
-		log("scene of HelloWorld creating failed!");
-		director->end();
-	}
+	CCASSERT(scene, "scene of HelloWorld creating failed!");
 
     // run
     director->runWithScene(scene);

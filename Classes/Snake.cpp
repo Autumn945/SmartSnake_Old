@@ -25,23 +25,29 @@ int Snake::get_length() {
 
 Snake::Snake(ValueMap vm) {
 	log("start create a snake");
-	if (vm.count("direction") == 0) {
-		vm["direction"] = Value(DIRECTION::UP);
-	}
-	if (vm.count("image") == 0) {
-		vm["image"] = Value("snake0.png");
+	if (vm.empty()) {
+		log("create snake failed!");
 	}
 	position = GameNode::to_tile_map_pos(Vec2(vm["x"].asFloat(), vm["y"].asFloat()));
+	if (vm.count("direction") == 0) {
+		log("direction of snake has not define");
+		vm["direction"] = Value(DIRECTION::UP);
+	}
 	current_dir = (DIRECTION)vm["direction"].asInt();
-	log("(%d, %d), dir = %d, image = %s", position.first, position.second, current_dir, vm["image"].asString().c_str());
+	if (vm.count("image") == 0) {
+		log("image of snake has not define");
+		vm["image"] = Value("snake0.png");
+	}
 	this->image = vm["image"].asString();
 	this->setName(vm["name"].asString());
+	log("(%d, %d), dir = %d, image = %s", position.first, position.second, current_dir, vm["image"].asString().c_str());
 }
 
 bool Snake::init() {
-	if (!Node::init()) {
+	if (!SpriteBatchNode::initWithFile(this->image)) {
 		return false;
 	}
+	log("snake init");
 	is_dying = is_died = false;
 	snake_nodes = new queue<Sprite*>();
 	turn_list = new queue<DIRECTION>();
@@ -49,8 +55,7 @@ bool Snake::init() {
 	speed = 4;
 	step = 0;
 	time_stamp = 0;
-	new_head();
-
+	score = 0;
 	this->setAnchorPoint(Vec2::ZERO);
 	this->setPosition(Vec2::ZERO + Vec2(UNIT, UNIT) / 2);
 
@@ -73,6 +78,15 @@ bool Snake::go_ahead() {
 			is_died = true;
 		}
 		return false;
+	}
+	if (snake_nodes->empty()) {
+		new_head();
+	}
+	if (speed < 1) {
+		speed = 1;
+	}
+	else if (speed > UNIT) {
+		speed;
 	}
 	if (step < UNIT) {
 		step += speed;
@@ -99,9 +113,9 @@ bool Snake::new_tail() {
 	if (snake_nodes->empty()) {
 		return false;
 	}
-	auto pos = GameNode::to_tile_map_pos(snake_nodes->front()->getPosition());
-	GameNode::get_snake_map()[pos.first][pos.second].erase(snake_nodes->front());
-	this->removeChild(snake_nodes->front());
+	auto pos = MyGame::get_game_node()->to_tile_map_pos(snake_nodes->front()->getPosition());
+	MyGame::get_game_node()->get_snake_map()[pos.first][pos.second].erase(snake_nodes->front());
+	this->removeChild(snake_nodes->front(), true);
 	snake_nodes->pop();
 	if (!snake_nodes->empty()) {
 		snake_nodes->front()->setSpriteFrame(SpriteFrame::create(this->image, TAIL));
@@ -136,21 +150,21 @@ bool Snake::new_head() {
 		snake_nodes->back()->setSpriteFrame(SpriteFrame::create(this->image, rect));
 		snake_nodes->back()->setFlippedX(flipped_x);
 		snake_nodes->back()->setRotation(90 * current_dir);
-		position.first += game_width + dir_vector[current_dir].first;
-		position.second += game_height + dir_vector[current_dir].second;
-		position.first %= game_width;
-		position.second %= game_height;
+		position.first += GameNode::game_width + dir_vector[current_dir].first;
+		position.second += GameNode::game_height + dir_vector[current_dir].second;
+		position.first %= GameNode::game_width;
+		position.second %= GameNode::game_height;
 	}
-	if (GameNode::get_hole_map()->count(position) > 0) {
-		position = GameNode::get_hole_map()->at(position);
+	if (MyGame::get_game_node()->get_hole_map()->count(position) > 0) {
+		position = MyGame::get_game_node()->get_hole_map()->at(position);
 	}
 	auto head = Sprite::create(this->image, HEAD);
 	head->setTag(time_stamp++);
-	head->setPosition(GameNode::to_cocos_pos(position));
-	log("%s arrived (%d, %d)", this->getName().c_str(), position.first, position.second);
+	head->setPosition(MyGame::get_game_node()->to_cocos_pos(position));
+	//log("%s arrived (%d, %d)", this->getName().c_str(), position.first, position.second);
 	head->setRotation(90 * current_dir);
 	snake_nodes->push(head);
-	GameNode::get_snake_map()[position.first][position.second].insert(head);
+	MyGame::get_game_node()->get_snake_map()[position.first][position.second].insert(head);
 	this->addChild(head);
 	return true;
 }
@@ -159,13 +173,13 @@ bool Snake::check() {
 	if (is_dying || is_died) {
 		return false;
 	}
-	auto wall = GameNode::get_tile_map()->getLayer("wall");
+	auto wall = MyGame::get_game_node()->getLayer("wall");
 	if (wall != NULL && wall->getTileGIDAt(Vec2(position.first, position.second)) > 0) {
 		log("%s p wall", this->getName().c_str());
 		is_dying = true;
 		return true;
 	}
-	auto mp = GameNode::get_snake_map();
+	auto mp = MyGame::get_game_node()->get_snake_map();
 	for (auto sp : mp[position.first][position.second]) {
 		auto snk = (Snake*)sp->getParent();
 		if (sp == this->snake_nodes->back()) {
@@ -175,11 +189,21 @@ bool Snake::check() {
 		is_dying = true;
 		return true;
 	}
-	auto food = GameNode::get_tile_map()->getLayer("food");
+	auto food = MyGame::get_game_node()->getLayer("food");
 	if (food != NULL && food->getTileGIDAt(Vec2(position.first, position.second)) > 0) {
 		log("%s eat", this->getName().c_str());
+		score += speed;
 		this->add_food(1);
+		auto gid = food->getTileGIDAt(Vec2(position.first, position.second));
 		food->setTileGID(0, Vec2(position.first, position.second));
+		schedule([this, gid, food](float dt) {
+			auto points = MyGame::get_game_node()->get_accessible_points(position, this->get_current_dir());
+			if (points.empty()) {
+				return;
+			}
+			auto pos = points[random(0, (int)points.size() - 1)];
+			food->setTileGID(gid, Vec2(pos.first, pos.second));
+		}, 0, 0, 0, "new food");
 	}
 	return true;
 }

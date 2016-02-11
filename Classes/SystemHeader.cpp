@@ -10,9 +10,7 @@ const int UNIT = 32;
 const int TOP_LABEL_FONT_SIZE = 68;
 const int DEFAULT_LABEL_FONT_SIZE = 30;
 const int DEFAULT_MENU_FONT_SIZE = 48;
-const int game_width = 31;
-const int game_height = 19;
-
+const int touch_move_len = 150;
 // origin is the left-up corner
 // 0->up, 1->right, 2->down, 3->right
 const pii dir_vector[4] = { pii(0, -1), pii(1, 0), pii(0, 1), pii(-1, 0) };
@@ -24,10 +22,7 @@ Vec2 origin;
 
 bool init() {
 	UTF8_string = FileUtils::getInstance()->getValueMapFromFile("UTF8_string.xml");
-	if (UTF8_string.size() == 0) {
-		log("!!!!!!!!!!!!!!!!!! size of UTF8_string is 0");
-		return false;
-	}
+	CCASSERT(UTF8_string.size(), "!!!!!!!!!!!!!!!!!! size of UTF8_string is 0");
 	
 	visible_size = Director::getInstance()->getVisibleSize();
 	origin = Director::getInstance()->getVisibleOrigin();

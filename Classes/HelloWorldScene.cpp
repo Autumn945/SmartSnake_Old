@@ -6,12 +6,8 @@ using namespace std;
 Scene* HelloWorld::createScene() {
 	auto scene = Scene::create();
 	auto layer = HelloWorld::create();
-	if (layer == NULL) {
-		log("layer of HelloWorld creating failed!");
-	}
-	else {
-		scene->addChild(layer);
-	}
+	CCASSERT(layer, "layer of HelloWorld creating failed!");
+	scene->addChild(layer);
 	return scene;
 }
 
@@ -29,10 +25,7 @@ bool HelloWorld::init() {
 	// create background
 	auto center = origin + visible_size / 2;
 	auto sp = Sprite::create("HelloWorld.png");
-	if (sp == NULL) {
-		log("HelloWorld.png has not found");
-		return false;
-	}
+	CCASSERT(sp, "HelloWorld.png has not found");
 	sp->setPosition(center);
 	this->addChild(sp);
 
@@ -42,10 +35,7 @@ bool HelloWorld::init() {
 	// to next scene
 	schedule([](float dt) {
 		auto next_scene = MainMenu::createScene();
-		if (next_scene == NULL) {
-			log("scene of HelloWorld creating failed!");
-			return;
-		}
+		CCASSERT(next_scene, "scene of HelloWorld creating failed!");
 		auto Transition_scene = TransitionCrossFade::create(SCENE_TURN_TRANSITION_TIME, next_scene);
 		Director::getInstance()->replaceScene(Transition_scene);
 		log("scene replaced");
