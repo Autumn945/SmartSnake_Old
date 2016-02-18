@@ -12,13 +12,13 @@ public:
 	DEFINE_VAR_GET(pii, position);
 	DEFINE_VAR_GET(int, score);
 	DEFINE_VAR_GET(string, image);
-	DEFINE_VAR_GET(bool, is_dying);
 	DEFINE_VAR_GET(bool, is_died);
-	DEFINE_VAR_GET(int, time_stamp);
 	DEFINE_VAR_GET_ADD(int, food);
-	DEFINE_VAR_GET_ADD(int, speed);
-	DEFINE_VAR_GET_ADD(int, step);
+protected:
+	pii target;
+	int hunger;
 
+public:
 	Snake(ValueMap vm);
 	~Snake();
 	virtual bool init();
@@ -29,7 +29,10 @@ public:
 	bool new_head();
 	bool check();
 	bool turn(DIRECTION dir);
+	bool go_die();
 	int get_tail_time_stamp();
+
+	bool act();
 
 };
 

@@ -39,53 +39,23 @@ bool MyGame::init() {
 	layer->setPosition(game_node->getPosition());
 	this->addChild(layer, -1);
 
-	//auto control = Sprite::create("control.png");
-	//if (control == NULL) {
-	//	log("control.png has not found!");
-	//	return false;
-	//}
-	//auto control_pressed = Sprite::create("control_pressed.png");
-	//if (control_pressed == NULL) {
-	//	log("control_pressed.png has not found!");
-	//	return false;
-	//}
-	//auto control_pressed_center = Sprite::create("control_pressed_center.png");
-	//if (control_pressed_center == NULL) {
-	//	log("control_pressed_center.png has not found!");
-	//	return false;
-	//}
-	//control->addChild(control_pressed);
-	//control->addChild(control_pressed_center);
-	//auto control_width = visible_size.width - game_node->getContentSize().width;
-	//auto scale = control_width / (control->getContentSize().width * sqrt(2.0));
-	//control->setRotation(-45);
-	//control->setScale(scale);
-	////control->setContentSize(Size(tmp, tmp));
-	//control->setPosition(origin.x + visible_size.width - control_width / 2
-	//	, origin.y + control_width / 2);
-	//control_pressed->setPosition(control->getContentSize() / 2);
-	//control_pressed_center->setPosition(control->getContentSize() / 2);
-	//this->addChild(control);
-	//control_pressed->setVisible(false);
-	//control_pressed_center->setVisible(false);
-	//add menu back
-	auto menu_back = MenuItemFont::create(get_UTF8_string("back"), [](Ref *sender) {
-		auto next_scene = MainMenu::createScene();
+	auto menu_back = MenuItemFont::create(get_UTF8_string("back"), [this](Ref *sender) {
+		/*auto next_scene = MainMenu::createScene();
 		CCASSERT(next_scene, "scene of MainMenu creating failed!");
 		auto Transition_scene = TransitionCrossFade::create(SCENE_TURN_TRANSITION_TIME, next_scene);
-		Director::getInstance()->replaceScene(Transition_scene);
+		Director::getInstance()->replaceScene(Transition_scene);*/
+		this->removeChild(game_node);
+		game_node = GameNode::createWithTMXFile("2.tmx");
+		CCASSERT(game_node, "gamenode create failed!");
+		this->addChild(game_node);
 	});
 	menu_back->setAnchorPoint(Vec2(0, 0));
 	menu_back->setPosition(origin.x, origin.y);
 	auto menu_add_speed = MenuItemFont::create("   +   ", [](Ref *sender) {
-		for (auto snake : *game_node->get_player()) {
-			snake->add_speed(1);
-		}
+		game_node->add_speed(1);
 	});
 	auto menu_sub_speed = MenuItemFont::create("   -   ", [](Ref *sender) {
-		for (auto snake : *game_node->get_player()) {
-			snake->add_speed(-1);
-		}
+		game_node->add_speed(-1);
 
 	});
 	menu_add_speed->setAnchorPoint(Vec2(1, 0));
@@ -101,7 +71,7 @@ bool MyGame::init() {
 	auto listener_touch = EventListenerTouchOneByOne::create();
 	Vec2 *touch_begin = new Vec2();
 	listener_touch->onTouchBegan = [touch_begin](Touch *t, Event *e) {
-		log("touch began on (%.0f, %.0f)", t->getLocation().x, t->getLocation().y);
+		//log("touch began on (%.0f, %.0f)", t->getLocation().x, t->getLocation().y);
 		auto position = t->getLocation();
 		*touch_begin = position;
 		return true;
@@ -121,20 +91,18 @@ bool MyGame::init() {
 	listener_touch->onTouchEnded = [set_dir](Touch *t, Event *e) {
 		if (Rect(Vec2::ZERO, game_node->getContentSize()).containsPoint(game_node->convertToNodeSpace(t->getStartLocation()))) {
 			auto v = t->getLocation() - t->getStartLocation();
-			log("touch ended, (%.0f, %.0f) --> (%.0f, %.0f)", t->getLocation().x, t->getLocation().y, t->getStartLocation().x, t->getStartLocation().y);
+			//log("touch ended, (%.0f, %.0f) --> (%.0f, %.0f)", t->getLocation().x, t->getLocation().y, t->getStartLocation().x, t->getStartLocation().y);
 			if (v.isZero()) {
 				v = t->getLocation() - (origin + visible_size / 2);
 				DIRECTION dir = set_dir(v);
-				log("(%.0f, %.0f), dir = %d", t->getLocation().x, t->getLocation().y, dir);
-				for (auto snake : *game_node->get_player()) {
-					snake->turn(dir);
-				}
+				//log("(%.0f, %.0f), dir = %d", t->getLocation().x, t->getLocation().y, dir);
+				game_node->get_player()->turn(dir);
 			}
 		}
 		return true;
 	};
 	listener_touch->onTouchMoved = [set_dir, touch_begin](Touch *t, Event *e) {
-		log("touch moved!!");
+		//log("touch moved!!");
 		auto pos = t->getLocation();
 		auto start_pre = t->getPreviousLocation() - *touch_begin;
 		auto pre_now = pos - t->getPreviousLocation();
@@ -142,14 +110,32 @@ bool MyGame::init() {
 			*touch_begin = pos;
 		}
 		if (pos.distance(*touch_begin) > touch_move_len) {
-			log("distence = %f", pos.distance(*touch_begin));
+			//log("distence = %f", pos.distance(*touch_begin));
 			DIRECTION dir = set_dir(pos - *touch_begin);
-			for (auto snake : *game_node->get_player()) {
-				snake->turn(dir);
-			}
+			game_node->get_player()->turn(dir);
 			*touch_begin = pos;
 		}
 	};
+	auto listener_key = EventListenerKeyboard::create();
+	listener_key->onKeyPressed = [](EventKeyboard::KeyCode key, Event *e) {
+		DIRECTION dir;
+		switch (key) {
+		case EventKeyboard::KeyCode::KEY_UP_ARROW:
+			dir = DIRECTION::UP;
+			break;
+		case EventKeyboard::KeyCode::KEY_DOWN_ARROW:
+			dir = DIRECTION::DOWN;
+			break;
+		case EventKeyboard::KeyCode::KEY_LEFT_ARROW:
+			dir = DIRECTION::LEFT;
+			break;
+		case EventKeyboard::KeyCode::KEY_RIGHT_ARROW:
+			dir = DIRECTION::RIGHT;
+			break;
+		}
+		game_node->get_player()->turn(dir);
+	};
 	Director::getInstance()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(listener_touch, this);
+	Director::getInstance()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(listener_key, this);
 	return true;
 }

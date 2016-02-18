@@ -59,6 +59,8 @@ extern const int TOP_LABEL_FONT_SIZE;
 extern const int DEFAULT_LABEL_FONT_SIZE;
 extern const int DEFAULT_MENU_FONT_SIZE;
 extern const int touch_move_len;
+const int max_game_width = 40;
+const int max_game_height = 22;
 
 extern const pii dir_vector[4];
 

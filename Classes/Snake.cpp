@@ -48,14 +48,13 @@ bool Snake::init() {
 		return false;
 	}
 	log("snake init");
-	is_dying = is_died = false;
+	is_died = false;
 	snake_nodes = new queue<Sprite*>();
 	turn_list = new queue<DIRECTION>();
 	food = 1;
-	speed = 4;
-	step = 0;
-	time_stamp = 0;
 	score = 0;
+	hunger = 0;
+	target = pii(-1, -1);
 	this->setAnchorPoint(Vec2::ZERO);
 	this->setPosition(Vec2::ZERO + Vec2(UNIT, UNIT) / 2);
 
@@ -63,6 +62,8 @@ bool Snake::init() {
 }
 
 Snake::~Snake() {
+	delete turn_list;
+	delete snake_nodes;
 	log("deleted a snake");
 }
 
@@ -70,29 +71,9 @@ bool Snake::go_ahead() {
 	if (is_died) {
 		return false;
 	}
-	if (is_dying) {
-		if (snake_nodes->size() >= 2) {
-			new_tail();
-		}
-		else {
-			is_died = true;
-		}
-		return false;
-	}
 	if (snake_nodes->empty()) {
 		new_head();
 	}
-	if (speed < 1) {
-		speed = 1;
-	}
-	else if (speed > UNIT) {
-		speed;
-	}
-	if (step < UNIT) {
-		step += speed;
-		return false;
-	}
-	step -= UNIT;
 	if (food == 0) {
 		new_tail();
 	}
@@ -105,7 +86,7 @@ bool Snake::go_ahead() {
 		food++;
 	}
 	new_head();
-	go_ahead();
+	hunger++;
 	return true;
 }
 
@@ -124,6 +105,7 @@ bool Snake::new_tail() {
 }
 
 bool Snake::new_head() {
+	auto game_node = MyGame::get_game_node();
 	if (!snake_nodes->empty()) {
 		auto next_dir = current_dir;
 		if (!turn_list->empty()) {
@@ -150,17 +132,11 @@ bool Snake::new_head() {
 		snake_nodes->back()->setSpriteFrame(SpriteFrame::create(this->image, rect));
 		snake_nodes->back()->setFlippedX(flipped_x);
 		snake_nodes->back()->setRotation(90 * current_dir);
-		position.first += GameNode::game_width + dir_vector[current_dir].first;
-		position.second += GameNode::game_height + dir_vector[current_dir].second;
-		position.first %= GameNode::game_width;
-		position.second %= GameNode::game_height;
-	}
-	if (MyGame::get_game_node()->get_hole_map()->count(position) > 0) {
-		position = MyGame::get_game_node()->get_hole_map()->at(position);
+		position = game_node->get_next_position(position, current_dir);
 	}
 	auto head = Sprite::create(this->image, HEAD);
-	head->setTag(time_stamp++);
-	head->setPosition(MyGame::get_game_node()->to_cocos_pos(position));
+	head->setTag(game_node->get_time_stamp());
+	head->setPosition(game_node->to_cocos_pos(position));
 	//log("%s arrived (%d, %d)", this->getName().c_str(), position.first, position.second);
 	head->setRotation(90 * current_dir);
 	snake_nodes->push(head);
@@ -170,39 +146,47 @@ bool Snake::new_head() {
 }
 
 bool Snake::check() {
-	if (is_dying || is_died) {
+	if (is_died) {
 		return false;
 	}
-	auto wall = MyGame::get_game_node()->getLayer("wall");
+	auto game_node = MyGame::get_game_node();
+	auto wall = game_node->getLayer("wall");
 	if (wall != NULL && wall->getTileGIDAt(Vec2(position.first, position.second)) > 0) {
 		log("%s p wall", this->getName().c_str());
-		is_dying = true;
+		go_die();
 		return true;
 	}
-	auto mp = MyGame::get_game_node()->get_snake_map();
+	auto mp = game_node->get_snake_map();
 	for (auto sp : mp[position.first][position.second]) {
 		auto snk = (Snake*)sp->getParent();
 		if (sp == this->snake_nodes->back()) {
 			continue;
 		}
 		log("%s p %s", this->getName().c_str(), snk->getName().c_str());
-		is_dying = true;
+		go_die();
 		return true;
 	}
-	auto food = MyGame::get_game_node()->getLayer("food");
+	auto food = game_node->getLayer("food");
 	if (food != NULL && food->getTileGIDAt(Vec2(position.first, position.second)) > 0) {
-		log("%s eat", this->getName().c_str());
-		score += speed;
+		//log("%s eat", this->getName().c_str());
+		hunger = 0;
+		target = pii(-1, -1);
+		//score += MyGame::get_game_node()->get_speed();
+		score++;
 		this->add_food(1);
 		auto gid = food->getTileGIDAt(Vec2(position.first, position.second));
 		food->setTileGID(0, Vec2(position.first, position.second));
 		schedule([this, gid, food](float dt) {
-			auto points = MyGame::get_game_node()->get_accessible_points(position, this->get_current_dir());
+			/*auto points = MyGame::get_game_node()->get_accessible_points(position);
 			if (points.empty()) {
 				return;
 			}
 			auto pos = points[random(0, (int)points.size() - 1)];
-			food->setTileGID(gid, Vec2(pos.first, pos.second));
+			food->setTileGID(gid, Vec2(pos.first, pos.second));*/
+			auto pos = MyGame::get_game_node()->get_random_empty_point();
+			if (pos.first >= 0) {
+				food->setTileGID(gid, Vec2(pos.first, pos.second));
+			}
 		}, 0, 0, 0, "new food");
 	}
 	return true;
@@ -223,9 +207,70 @@ bool Snake::turn(DIRECTION dir) {
 	return false;
 }
 
+bool Snake::go_die() {
+	is_died = true;
+	/*if (snake_nodes->size() > 1) {
+		schedule([this](float dt) {
+			new_tail();
+		}, 1 / 30.0f, snake_nodes->size() - 1, 0, "go die");
+	}*/
+	/*while (!snake_nodes->empty()) {
+		new_tail();
+	}*/
+	return false;
+}
+
 int Snake::get_tail_time_stamp() {
 	if (snake_nodes->empty()) {
 		return 0;
 	}
-	return snake_nodes->front()->getTag();
+	return snake_nodes->front()->getTag() -food;
+}
+
+bool Snake::act() {
+	auto begin_time = clock();
+	if (!turn_list->empty()) {
+		return false;
+	}
+	auto game_node = MyGame::get_game_node();
+	if (get_length() < (GameNode::game_width - 2) * (GameNode::game_height - 2) * 0.7 || hunger > GameNode::game_width * GameNode::game_height) {
+		bool safe = true;
+		if (hunger > GameNode::game_width * GameNode::game_height * 2) {
+			safe = false;
+		}
+		if (0 && target.first >= 0) {
+			auto dir = game_node->get_target_shortest_path_dir(position, current_dir, target, safe);
+			if (dir >= 0) {
+				turn_list->push((DIRECTION)dir);
+				log("act 1, dir = %d, delay = %d", dir, clock() - begin_time);
+				return true;
+			}
+		}
+		else {
+			auto targets = game_node->get_foods();
+			for (auto t : targets) {
+				auto dir = game_node->get_target_shortest_path_dir(position, current_dir, t, safe);
+				if (dir >= 0) {
+					target = t;
+					turn_list->push((DIRECTION)dir);
+					//log("act 2, dir = %d, delay = %d", dir, clock() - begin_time);
+					return true;
+				}
+			}
+		}
+	}
+	int lenght_step_min;
+	auto t = game_node->get_accessible_last_snake_node(position, current_dir, lenght_step_min);
+	auto dir = game_node->get_target_longest_path_dir(position, current_dir, t);
+	if (dir >= 0) {
+		//log("go to (%d, %d)", t.first, t.second);
+		turn_list->push((DIRECTION)dir);
+		//log("act 3, dir = %d, delay = %d", dir, clock() - begin_time);
+		return true;
+	}
+	log("!!!!!!!!!!!!!!!failed!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+	//go_die();
+	dir = random(0, 3);
+	this->turn((DIRECTION)dir);
+	return false;
 }
