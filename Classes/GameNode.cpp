@@ -167,22 +167,6 @@ void GameNode::update(float dt) {
 	}
 }
 
-void dfs_points(bool vis[max_game_width][max_game_height], bool not_empty[max_game_width][max_game_height], vector<pii> &ret, pii now) {
-	if (vis[now.first][now.second]) {
-		return;
-	}
-	vis[now.first][now.second] = true;
-	if (not_empty[now.first][now.second]) {
-		return;
-	}
-	for (int i = 0; i < 4; i++) {
-		auto x = (now.first + dir_vector[i].first + GameNode::game_width) % GameNode::game_width;
-		auto y = (now.second + dir_vector[i].second + GameNode::game_height) % GameNode::game_height;
-		dfs_points(vis, not_empty, ret, pii(x, y));
-	}
-	ret.push_back(now);
-}
-
 vector<pii> GameNode::get_accessible_points(pii begin) {
 	vector<pii> ret = get_all_empty_points();
 	bool vis[max_game_width][max_game_height] = { false };
@@ -190,10 +174,18 @@ vector<pii> GameNode::get_accessible_points(pii begin) {
 	for (auto e : ret) {
 		not_empty[e.first][e.second] = true;
 	}
-	for (int i = 0; i < 4; i++) {
-		auto x = (begin.first + dir_vector[i].first + game_width) % game_width;
-		auto y = (begin.second + dir_vector[i].second + game_height) % game_height;
-		dfs_points(vis, not_empty, ret, pii(x, y));
+	queue<pii> q;
+	q.push(begin);
+	while (!q.empty()) {
+		auto now = q.front();
+		q.pop();
+		for (int i = 0; i < 4; i++) {
+			auto nxt = get_next_position(now, (DIRECTION)i);
+			if (not_empty[nxt.first][nxt.second]) {
+				q.push(nxt);
+				ret.push_back(nxt);
+			}
+		}
 	}
 	return ret;
 }
@@ -254,6 +246,9 @@ bool GameNode::is_empty(pii pos, int delay) {
 	if (delay > 0) {
 		for (auto sp : snake_map[pos.first][pos.second]) {
 			auto snake = (Snake*)sp->getParent();
+			if (snake == NULL) {
+				return false;
+			}
 			if (sp->getTag() - snake->get_tail_time_stamp() >= delay) {
 				return false;
 			}
@@ -282,28 +277,6 @@ vector<pii> GameNode::get_foods() {
 		}
 	}
 	return ret;
-	//auto hole_map = MyGame::get_game_node()->get_hole_map();
-	//bool vis[max_game_width][max_game_height] = { false };
-	//queue<pii> q;
-	//q.push(pii(0, 0));
-	//while (!q.empty()) {
-	//	auto now = q.front();
-	//	q.pop();
-	//	for (int i = 0; i < 4; i++) {
-	//		auto nxt = game_node->get_next_position(now, (DIRECTION)i);
-	//		if (vis[nxt.first][nxt.second]) {
-	//			continue;
-	//		}
-	//		vis[nxt.first][nxt.second] = true;
-	//		if (food->getTileGIDAt(Vec2(nxt.first, nxt.second)) > 0) {
-	//			//log("get food at (%d, %d)", nxt.first, nxt.second);
-	//			ret.push_back(nxt);
-	//			break;
-	//		}
-	//		q.push(nxt);
-	//	}
-	//}
-	//return ret;
 }
 
 pii GameNode::get_accessible_last_snake_node(pii position, int dir, int &lenght_step_min) {
@@ -331,7 +304,12 @@ pii GameNode::get_accessible_last_snake_node(pii position, int dir, int &lenght_
 				int time_stamp_max = -step;
 				for (auto sp : snake_map[nxt.first][nxt.second]) {
 					auto snake = (Snake*)sp->getParent();
-					time_stamp_max = max(time_stamp_max, sp->getTag() - snake->get_tail_time_stamp() - step);
+					if (snake == NULL) {
+						time_stamp_max = 0x3f3f3f3f;
+					}
+					else {
+						time_stamp_max = max(time_stamp_max, sp->getTag() - snake->get_tail_time_stamp() - step);
+					}
 				}
 				if ((step > 1 || time_stamp_max < 0) && time_stamp_max < lenght_step_min) {
 					lenght_step_min = time_stamp_max;
@@ -403,20 +381,8 @@ int GameNode::get_target_shortest_path_dir(pii position, int current_dir, pii ta
 		target = vt[0];
 		int vs = vt.size();
 		vector<Sprite*> sps;
-		Snake *snake = player;
-		//for (auto sp : snake_map[position.first][position.second]) {
-		//	auto snk = (Snake*)sp->getParent();
-		//	//if (sp == snake->get_snake_nodes()->back())
-		//	{
-		//		snake = snk;
-		//		break;
-		//	}
-		//}
-		//CCASSERT(snake, "snake is null");
 		for (int i = vs - 1; i >= 0; i--) {
 			auto sp = Sprite::create();
-			sp->setTag(time_stamp + vs - 1 - i);
-			snake->addChild(sp);
 			snake_map[vt[i].first][vt[i].second].insert(sp);
 			sps.push_back(sp);
 		}
@@ -428,7 +394,6 @@ int GameNode::get_target_shortest_path_dir(pii position, int current_dir, pii ta
 		for (int i = vs - 1; i >= 0; i--) {
 			auto sp = sps[vs - 1 - i];
 			snake_map[vt[i].first][vt[i].second].erase(sp);
-			snake->removeChild(sp, true);
 		}
 		return ret;
 	}

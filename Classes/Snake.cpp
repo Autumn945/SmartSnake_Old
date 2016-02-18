@@ -158,11 +158,16 @@ bool Snake::check() {
 	}
 	auto mp = game_node->get_snake_map();
 	for (auto sp : mp[position.first][position.second]) {
-		auto snk = (Snake*)sp->getParent();
 		if (sp == this->snake_nodes->back()) {
 			continue;
 		}
-		log("%s p %s", this->getName().c_str(), snk->getName().c_str());
+		auto snk = (Snake*)sp->getParent();
+		if (snk == NULL) {
+			log("%s p NULL", this->getName().c_str());
+		}
+		else {
+			log("%s p %s", this->getName().c_str(), snk->getName().c_str());
+		}
 		go_die();
 		return true;
 	}
@@ -233,9 +238,9 @@ bool Snake::act() {
 		return false;
 	}
 	auto game_node = MyGame::get_game_node();
-	if (get_length() < (GameNode::game_width - 2) * (GameNode::game_height - 2) * 0.7 || hunger > GameNode::game_width * GameNode::game_height) {
+	if (get_length() < (GameNode::game_width - 2) * (GameNode::game_height - 2) * 0.6 || hunger > GameNode::game_width * GameNode::game_height) {
 		bool safe = true;
-		if (hunger > GameNode::game_width * GameNode::game_height * 2) {
+		if (hunger > GameNode::game_width * GameNode::game_height * 3) {
 			safe = false;
 		}
 		if (0 && target.first >= 0) {
