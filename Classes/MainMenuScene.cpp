@@ -6,7 +6,6 @@ USING_NS_CC;
 Scene* MainMenu::createScene() {
 	auto scene = Scene::create();
 	auto layer = MainMenu::create();
-	CCASSERT(layer, "layer of MainMenu creating failed!");
 	scene->addChild(layer);
 	return scene;
 }
@@ -24,7 +23,6 @@ bool MainMenu::init() {
 	auto create_menu_turn_to_option = [](string name) {
 		return MenuItemFont::create(get_UTF8_string(name), [name](Ref *sender) {
 			auto next_scene = Option::createScene(name);
-			CCASSERT(next_scene, "scene of Option of %s creating failed!");
 			auto Transition_scene = TransitionCrossFade::create(SCENE_TURN_TRANSITION_TIME, next_scene);
 			Director::getInstance()->replaceScene(Transition_scene);
 		});
@@ -33,9 +31,7 @@ bool MainMenu::init() {
 	//main menu
 	auto menu_start = MenuItemFont::create(get_UTF8_string("start"), [=](Ref *sender) {
 		log("hit start");
-		auto next_scene = MyGame::createScene();
-		log("create finished");
-		CCASSERT(next_scene, "scene of MyGame creating failed!");
+		auto next_scene = GameMenu::createScene();
 		auto Transition_scene = TransitionCrossFade::create(SCENE_TURN_TRANSITION_TIME, next_scene); 
 		Director::getInstance()->replaceScene(Transition_scene);
 	});

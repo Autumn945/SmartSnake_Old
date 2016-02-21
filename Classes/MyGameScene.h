@@ -1,18 +1,21 @@
 #pragma once
 #include "SystemHeader.h"
 
-class GameNode;
+class GameMap;
+class Snake;
 
 USING_NS_CC;
 using namespace std;
 class MyGame : public Layer {
 public:
-	static Scene* createScene();
+	static Scene* createScene(string file_name);
+	static string map_file_name;
 	virtual bool init();
 	CREATE_FUNC(MyGame);
-	DEFINE_VAR_GET(static GameNode*, game_node);
+	virtual void update(float dt);
 
-	//test
-	Label *top_label;
+	GameMap* game_map;
+	Snake* player;
+	DEFINE_VAR_GET_ADD(int, speed);
+	DEFINE_VAR_GET_ADD(int, step);
 };
-

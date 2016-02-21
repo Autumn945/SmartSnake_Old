@@ -69,7 +69,7 @@ extern Size visible_size;
 extern Vec2 origin;
 
 #include "MyGameScene.h"
-#include "GameNode.h"
+#include "GameMap.h"
 #include "AppDelegate.h"
 #include "HelloWorldScene.h"
 #include "MainMenuScene.h"

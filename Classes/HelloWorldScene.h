@@ -8,7 +8,5 @@ public:
 	static Scene* createScene();
 	virtual bool init();
 	CREATE_FUNC(HelloWorld);
-
-	void delay_call(float dt);
 };
 

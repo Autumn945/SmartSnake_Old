@@ -6,6 +6,7 @@ USING_NS_CC;
 
 class Snake : public SpriteBatchNode{
 public:
+	DEFINE_VAR_GET_SET(GameMap*, game_map);
 	DEFINE_VAR_GET_SET(queue<Sprite*>*, snake_nodes);
 	DEFINE_VAR_GET(queue<DIRECTION>*, turn_list);
 	DEFINE_VAR_GET(DIRECTION, current_dir);
@@ -19,10 +20,10 @@ protected:
 	int hunger;
 
 public:
-	Snake(ValueMap vm);
+	Snake(ValueMap vm, GameMap* game_map);
 	~Snake();
 	virtual bool init();
-	static Snake* create(ValueMap vm);
+	static Snake* create(ValueMap vm, GameMap* game_map);
 	int get_length();
 	bool go_ahead();
 	bool new_tail();

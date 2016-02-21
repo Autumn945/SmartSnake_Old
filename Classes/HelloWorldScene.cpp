@@ -6,7 +6,6 @@ using namespace std;
 Scene* HelloWorld::createScene() {
 	auto scene = Scene::create();
 	auto layer = HelloWorld::create();
-	CCASSERT(layer, "layer of HelloWorld creating failed!");
 	scene->addChild(layer);
 	return scene;
 }
@@ -35,7 +34,6 @@ bool HelloWorld::init() {
 	// to next scene
 	schedule([](float dt) {
 		auto next_scene = MainMenu::createScene();
-		CCASSERT(next_scene, "scene of HelloWorld creating failed!");
 		auto Transition_scene = TransitionCrossFade::create(SCENE_TURN_TRANSITION_TIME, next_scene);
 		Director::getInstance()->replaceScene(Transition_scene);
 		log("scene replaced");

@@ -6,8 +6,8 @@
 #define TAIL Rect(UNIT, 3 * UNIT, UNIT, UNIT)
 
 //snake is player if type = 0
-Snake* Snake::create(ValueMap vm) {
-	Snake *pRet = new(std::nothrow) Snake(vm);
+Snake* Snake::create(ValueMap vm, GameMap* game_map) {
+	Snake *pRet = new(std::nothrow) Snake(vm, game_map);
 	if (pRet && pRet->init()) {
 		pRet->autorelease();
 		return pRet;
@@ -23,12 +23,13 @@ int Snake::get_length() {
 	return snake_nodes->size() + food;
 }
 
-Snake::Snake(ValueMap vm) {
+Snake::Snake(ValueMap vm, GameMap* game_map) {
 	log("start create a snake");
 	if (vm.empty()) {
 		log("create snake failed!");
 	}
-	position = GameNode::to_tile_map_pos(Vec2(vm["x"].asFloat(), vm["y"].asFloat()));
+	this->game_map = game_map;
+	position = game_map->to_tile_map_pos(Vec2(vm["x"].asFloat(), vm["y"].asFloat()));
 	if (vm.count("direction") == 0) {
 		log("direction of snake has not define");
 		vm["direction"] = Value(DIRECTION::UP);
@@ -55,9 +56,11 @@ bool Snake::init() {
 	score = 0;
 	hunger = 0;
 	target = pii(-1, -1);
+	new_head();
 	this->setAnchorPoint(Vec2::ZERO);
 	this->setPosition(Vec2::ZERO + Vec2(UNIT, UNIT) / 2);
-
+	//game_map->addChild(this);
+	log("init parent = %d", this->getParent());
 	return true;
 }
 
@@ -70,9 +73,6 @@ Snake::~Snake() {
 bool Snake::go_ahead() {
 	if (is_died) {
 		return false;
-	}
-	if (snake_nodes->empty()) {
-		new_head();
 	}
 	if (food == 0) {
 		new_tail();
@@ -94,8 +94,8 @@ bool Snake::new_tail() {
 	if (snake_nodes->empty()) {
 		return false;
 	}
-	auto pos = MyGame::get_game_node()->to_tile_map_pos(snake_nodes->front()->getPosition());
-	MyGame::get_game_node()->get_snake_map()[pos.first][pos.second].erase(snake_nodes->front());
+	auto pos = game_map->to_tile_map_pos(snake_nodes->front()->getPosition());
+	game_map->get_snake_map()[pos.first][pos.second] = NULL;
 	this->removeChild(snake_nodes->front(), true);
 	snake_nodes->pop();
 	if (!snake_nodes->empty()) {
@@ -105,7 +105,6 @@ bool Snake::new_tail() {
 }
 
 bool Snake::new_head() {
-	auto game_node = MyGame::get_game_node();
 	if (!snake_nodes->empty()) {
 		auto next_dir = current_dir;
 		if (!turn_list->empty()) {
@@ -132,15 +131,15 @@ bool Snake::new_head() {
 		snake_nodes->back()->setSpriteFrame(SpriteFrame::create(this->image, rect));
 		snake_nodes->back()->setFlippedX(flipped_x);
 		snake_nodes->back()->setRotation(90 * current_dir);
-		position = game_node->get_next_position(position, current_dir);
+		position = game_map->get_next_position(position, current_dir);
 	}
 	auto head = Sprite::create(this->image, HEAD);
-	head->setTag(game_node->get_time_stamp());
-	head->setPosition(game_node->to_cocos_pos(position));
+	head->setTag(game_map->get_time_stamp());
+	head->setPosition(game_map->to_cocos_pos(position));
 	//log("%s arrived (%d, %d)", this->getName().c_str(), position.first, position.second);
 	head->setRotation(90 * current_dir);
 	snake_nodes->push(head);
-	MyGame::get_game_node()->get_snake_map()[position.first][position.second].insert(head);
+	game_map->get_snake_map()[position.first][position.second] = head;
 	this->addChild(head);
 	return true;
 }
@@ -149,18 +148,14 @@ bool Snake::check() {
 	if (is_died) {
 		return false;
 	}
-	auto game_node = MyGame::get_game_node();
-	auto wall = game_node->getLayer("wall");
+	auto wall = game_map->getLayer("wall");
 	if (wall != NULL && wall->getTileGIDAt(Vec2(position.first, position.second)) > 0) {
 		log("%s p wall", this->getName().c_str());
 		go_die();
 		return true;
 	}
-	auto mp = game_node->get_snake_map();
-	for (auto sp : mp[position.first][position.second]) {
-		if (sp == this->snake_nodes->back()) {
-			continue;
-		}
+	auto sp = game_map->get_snake_map()[position.first][position.second];
+	if (sp && sp != this->snake_nodes->back()) {
 		auto snk = (Snake*)sp->getParent();
 		if (snk == NULL) {
 			log("%s p NULL", this->getName().c_str());
@@ -171,7 +166,7 @@ bool Snake::check() {
 		go_die();
 		return true;
 	}
-	auto food = game_node->getLayer("food");
+	auto food = game_map->getLayer("food");
 	if (food != NULL && food->getTileGIDAt(Vec2(position.first, position.second)) > 0) {
 		//log("%s eat", this->getName().c_str());
 		hunger = 0;
@@ -188,7 +183,7 @@ bool Snake::check() {
 			}
 			auto pos = points[random(0, (int)points.size() - 1)];
 			food->setTileGID(gid, Vec2(pos.first, pos.second));*/
-			auto pos = MyGame::get_game_node()->get_random_empty_point();
+			auto pos = game_map->get_random_empty_point();
 			if (pos.first >= 0) {
 				food->setTileGID(gid, Vec2(pos.first, pos.second));
 			}
@@ -237,14 +232,15 @@ bool Snake::act() {
 	if (!turn_list->empty()) {
 		return false;
 	}
-	auto game_node = MyGame::get_game_node();
-	if (get_length() < (GameNode::game_width - 2) * (GameNode::game_height - 2) * 0.6 || hunger > GameNode::game_width * GameNode::game_height) {
+	auto width = float_to_int(game_map->getMapSize().width);
+	auto height = float_to_int(game_map->getMapSize().height);
+	if (get_length() < (width - 2) * (height - 2) * 0.6 || hunger > width * height) {
 		bool safe = true;
-		if (hunger > GameNode::game_width * GameNode::game_height * 3) {
+		if (hunger > width * height * 3) {
 			safe = false;
 		}
 		if (0 && target.first >= 0) {
-			auto dir = game_node->get_target_shortest_path_dir(position, current_dir, target, safe);
+			auto dir = game_map->get_target_shortest_path_dir(position, current_dir, target, safe);
 			if (dir >= 0) {
 				turn_list->push((DIRECTION)dir);
 				log("act 1, dir = %d, delay = %d", dir, clock() - begin_time);
@@ -252,9 +248,9 @@ bool Snake::act() {
 			}
 		}
 		else {
-			auto targets = game_node->get_foods();
+			auto targets = game_map->get_foods();
 			for (auto t : targets) {
-				auto dir = game_node->get_target_shortest_path_dir(position, current_dir, t, safe);
+				auto dir = game_map->get_target_shortest_path_dir(position, current_dir, t, safe);
 				if (dir >= 0) {
 					target = t;
 					turn_list->push((DIRECTION)dir);
@@ -265,8 +261,8 @@ bool Snake::act() {
 		}
 	}
 	int lenght_step_min;
-	auto t = game_node->get_accessible_last_snake_node(position, current_dir, lenght_step_min);
-	auto dir = game_node->get_target_longest_path_dir(position, current_dir, t);
+	auto t = game_map->get_accessible_last_snake_node(position, current_dir, lenght_step_min);
+	auto dir = game_map->get_target_longest_path_dir(position, current_dir, t);
 	if (dir >= 0) {
 		//log("go to (%d, %d)", t.first, t.second);
 		turn_list->push((DIRECTION)dir);

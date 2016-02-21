@@ -1,27 +1,23 @@
-#include "GameNode.h"
+#include "GameMap.h"
 #include "stdlib.h"
 
 USING_NS_CC;
 
-int GameNode::game_width;
-int GameNode::game_height;
-
-GameNode::~GameNode() {
-	delete AI;
-	log("deleted a GameNode");
+GameMap::~GameMap() {
+	log("deleted a GameMap");
 }
 
-pii GameNode::to_tile_map_pos(Vec2 pos) {
+pii GameMap::to_tile_map_pos(Vec2 pos) {
 	pos = pos / UNIT;
-	return pii(float_to_int(pos.x), game_height - float_to_int(pos.y) - 1);
+	return pii(float_to_int(pos.x), this->getMapSize().height - float_to_int(pos.y) - 1);
 }
-Vec2 GameNode::to_cocos_pos(pii pos) {
-	pos.second = game_height - pos.second - 1;
+Vec2 GameMap::to_cocos_pos(pii pos) {
+	pos.second = this->getMapSize().height - pos.second - 1;
 	return Vec2(pos.first, pos.second) * UNIT;
 }
 
-GameNode * GameNode::createWithTMXFile(string file_name) {
-	GameNode *pRet = new(std::nothrow) GameNode();
+GameMap * GameMap::createWithTMXFile(string file_name) {
+	GameMap *pRet = new(std::nothrow) GameMap();
 	if (pRet && pRet->initWithTMXFile(file_name)) {
 		pRet->autorelease();
 		return pRet;
@@ -33,22 +29,17 @@ GameNode * GameNode::createWithTMXFile(string file_name) {
 	}
 }
 
-bool GameNode::initWithTMXFile(string file_name) {
+bool GameMap::initWithTMXFile(string file_name) {
 	if (!TMXTiledMap::initWithTMXFile(file_name)) {
 		log("initWithTMXFile %s failed!", file_name.c_str());
 		return false;
 	}
-	log("GameNode init");
-	game_width = float_to_int(this->getMapSize().width);
-	game_height = float_to_int(this->getMapSize().height);
-	player = NULL;
-	AI = new(nothrow) vector<Snake*>();
+	log("GameMap init");
+
+	time_stamp = 0;
 
 	this->setAnchorPoint(Vec2(0.5, 1));
 	this->setPosition(Vec2(origin.x + visible_size.width / 2, origin.y + visible_size.height));
-	auto ggggg = [this]() {
-		return snake_map;
-	};
 
 	if (this->getLayer("wall") == NULL) {
 		log("layer wall of tile_map has not found!");
@@ -62,8 +53,10 @@ bool GameNode::initWithTMXFile(string file_name) {
 
 	auto hole_obj_group = this->getObjectGroup("hole_objs");
 	//init hole_map;
-	for (int i = 0; i < game_width; i++) {
-		for (int j = 0; j < game_height; j++) {
+	auto width = float_to_int(this->getMapSize().width);
+	auto height = float_to_int(this->getMapSize().height);
+	for (int i = 0; i < width; i++) {
+		for (int j = 0; j < height; j++) {
 			hole_map[i][j] = pii(i, j);
 		}
 	}
@@ -88,86 +81,10 @@ bool GameNode::initWithTMXFile(string file_name) {
 			hole_map[pos.first][pos.second] = to;
 		}
 	}
-
-	speed = 2;
-	step = 0;
-	time_stamp = 0;
-	auto snake_obj_group = this->getObjectGroup("snake_objs");
-	CCASSERT(snake_obj_group, "snake_objs has not defined!");
-	auto snake_objs = snake_obj_group->getObjects();
-	for (auto _snake : snake_objs) {
-		auto snake = _snake.asValueMap();
-		auto sp = Snake::create(snake);
-		if (snake["type"].asString() == "player") {
-			player = sp;
-		}
-		else {
-			AI->push_back(sp);
-		}
-		this->addChild(sp);
-	}
-	CCASSERT(player, "player has not defined!");
-	auto label = Label::createWithSystemFont("score: 0", "Arial", DEFAULT_LABEL_FONT_SIZE);
-	label->setAnchorPoint(Vec2(0.5, 1));
-	label->setPosition(this->getContentSize().width / 2, 0);
-	label->setName("score");
-	this->addChild(label);
-	scheduleUpdate();
 	return true;
 }
 
-void GameNode::update(float dt) {
-	if (speed < 1) {
-		speed = 1;
-	}
-	else if (speed > UNIT / 2) {
-		speed = UNIT / 2;
-	}
-	speed = 16;
-	step += speed;
-	if (step >= UNIT) {
-		step -= UNIT;
-		time_stamp++;
-		for (auto ai : *AI) {
-			if (!ai->get_is_died()) {
-				if (random(0, 9) == 0) {
-					ai->add_food(1);
-				}
-				ai->act();
-				ai->go_ahead();
-			}
-		}
-		// test
-		if (!player->get_is_died()) {
-			/*if (random(0, 9) == 0) {
-				player->add_food(1);
-			}*/
-			player->act();
-			player->go_ahead();
-			auto label = (Label*)this->getChildByName("score");
-			label->setString("score: " + Value(player->get_score()).asString());
-		}
-		else {
-			auto label = (Label*)this->getChildByName("score");
-			if (label != NULL) {
-				//label->setPosition(origin + visible_size / 2);
-				//label->runAction(ScaleTo::create(0.5f, 5));
-				label->setName("score2");
-			}
-		}
-		for (auto ai : *AI) {
-			if (!ai->get_is_died()) {
-				ai->check();
-			}
-		}
-		// test
-		if (!player->get_is_died()) {
-			player->check();
-		}
-	}
-}
-
-vector<pii> GameNode::get_accessible_points(pii begin) {
+vector<pii> GameMap::get_accessible_points(pii begin) {
 	vector<pii> ret = get_all_empty_points();
 	bool vis[max_game_width][max_game_height] = { false };
 	bool not_empty[max_game_width][max_game_height] = { false };
@@ -190,15 +107,17 @@ vector<pii> GameNode::get_accessible_points(pii begin) {
 	return ret;
 }
 
-vector<pii> GameNode::get_all_empty_points() {
+vector<pii> GameMap::get_all_empty_points() {
 	auto wall = this->getLayer("wall");
 	auto mp = this->get_snake_map();
 	auto food = this->getLayer("food");
 	vector<pii> ret;
-	for (int i = 0; i < game_width; i++) {
-		for (int j = 0; j < game_height; j++) {
+	auto width = float_to_int(this->getMapSize().width);
+	auto height = float_to_int(this->getMapSize().height);
+	for (int i = 0; i < width; i++) {
+		for (int j = 0; j < height; j++) {
 			if ((wall == NULL || wall->getTileGIDAt(Vec2(i, j)) == 0)
-				&& mp[i][j].empty()
+				&& mp[i][j] == NULL
 				&& (food == NULL || food->getTileGIDAt(Vec2(i, j)) == 0)) {
 				ret.push_back(pii(i, j));
 			}
@@ -207,20 +126,22 @@ vector<pii> GameNode::get_all_empty_points() {
 	return ret;
 }
 
-pii GameNode::get_random_empty_point() {
+pii GameMap::get_random_empty_point() {
 	auto wall = this->getLayer("wall");
 	auto mp = this->get_snake_map();
 	auto food = this->getLayer("food");
 	pii ret;
-	int r = game_width * game_height / 10;
+	auto width = float_to_int(this->getMapSize().width);
+	auto height = float_to_int(this->getMapSize().height);
+	int r = width * height / 10;
 	do {
 		r--;
 		if (r < 0) {
 			break;
 		}
-		ret = pii(random(0, game_width - 1),  random(0, game_height - 1));
+		ret = pii(random(0, width - 1),  random(0, height - 1));
 	} while ((wall != NULL && wall->getTileGIDAt(Vec2(ret.first, ret.second)) > 0)
-		|| (!mp[ret.first][ret.second].empty())
+		|| (mp[ret.first][ret.second])
 		|| (food != NULL && food->getTileGIDAt(Vec2(ret.first, ret.second)) > 0));
 	if (r < 0) {
 		auto empty_points = get_all_empty_points();
@@ -232,44 +153,43 @@ pii GameNode::get_random_empty_point() {
 	return ret;
 }
 
-pii GameNode::get_next_position(pii now, DIRECTION dir) {
-	auto x = (now.first + dir_vector[dir].first + game_width) % game_width;
-	auto y = (now.second + dir_vector[dir].second + game_height) % game_height; 
+pii GameMap::get_next_position(pii now, DIRECTION dir) {
+	auto width = float_to_int(this->getMapSize().width);
+	auto height = float_to_int(this->getMapSize().height);
+	auto x = (now.first + dir_vector[dir].first + width) % width;
+	auto y = (now.second + dir_vector[dir].second + height) % height; 
 	return hole_map[x][y];
 }
 
-bool GameNode::is_empty(pii pos, int delay) {
+bool GameMap::is_empty(pii pos, int delay) {
 	auto wall = this->getLayer("wall");
 	if (wall != NULL && wall->getTileGIDAt(Vec2(pos.first, pos.second)) > 0) {
 		return false;
 	}
-	if (delay > 0) {
-		for (auto sp : snake_map[pos.first][pos.second]) {
-			auto snake = (Snake*)sp->getParent();
-			if (snake == NULL) {
-				return false;
-			}
-			if (sp->getTag() - snake->get_tail_time_stamp() >= delay) {
-				return false;
-			}
+	auto sp = snake_map[pos.first][pos.second];
+	if (sp) {
+		auto snake = (Snake*)sp->getParent();
+		if (snake == NULL) {
+			return false;
 		}
-	}
-	else if (!snake_map[pos.first][pos.second].empty()) {
-		return false;
+		if (sp->getTag() - snake->get_tail_time_stamp() >= delay) {
+			return false;
+		}
 	}
 	return true;
 }
 
 
-vector<pii> GameNode::get_foods() {
+vector<pii> GameMap::get_foods() {
 	vector<pii> ret;
-	auto game_node = MyGame::get_game_node();
-	auto food = game_node->getLayer("food");
+	auto food = this->getLayer("food");
 	if (food == NULL) {
 		return ret;
 	}
-	for (int i = 0; i < game_width; i++) {
-		for (int j = 0; j < game_height; j++) {
+	auto width = float_to_int(this->getMapSize().width);
+	auto height = float_to_int(this->getMapSize().height);
+	for (int i = 0; i < width; i++) {
+		for (int j = 0; j < height; j++) {
 			if (food->getTileGIDAt(Vec2(i, j)) > 0) {
 				//log("get food at (%d, %d)", i, j);
 				ret.push_back(pii(i, j));
@@ -279,7 +199,7 @@ vector<pii> GameNode::get_foods() {
 	return ret;
 }
 
-pii GameNode::get_accessible_last_snake_node(pii position, int dir, int &lenght_step_min) {
+pii GameMap::get_accessible_last_snake_node(pii position, int dir, int &lenght_step_min) {
 	pii ret = position;
 	lenght_step_min = this->get_time_stamp();
 	bool vis[max_game_width][max_game_height] = { false };
@@ -300,17 +220,16 @@ pii GameNode::get_accessible_last_snake_node(pii position, int dir, int &lenght_
 			if (wall != NULL && wall->getTileGIDAt(Vec2(nxt.first, nxt.second)) > 0) {
 				continue;
 			}
-			if (!snake_map[nxt.first][nxt.second].empty()) {
+			if (!snake_map[nxt.first][nxt.second]) {
 				int time_stamp_max = -step;
-				for (auto sp : snake_map[nxt.first][nxt.second]) {
+				auto sp = snake_map[nxt.first][nxt.second];
 					auto snake = (Snake*)sp->getParent();
 					if (snake == NULL) {
 						time_stamp_max = 0x3f3f3f3f;
 					}
 					else {
-						time_stamp_max = max(time_stamp_max, sp->getTag() - snake->get_tail_time_stamp() - step);
+						time_stamp_max = sp->getTag() - snake->get_tail_time_stamp() - step;
 					}
-				}
 				if ((step > 1 || time_stamp_max < 0) && time_stamp_max < lenght_step_min) {
 					lenght_step_min = time_stamp_max;
 					ret = nxt;
@@ -327,7 +246,7 @@ pii GameNode::get_accessible_last_snake_node(pii position, int dir, int &lenght_
 	return ret;
 }
 
-int GameNode::get_target_shortest_path_dir(pii position, int current_dir, pii target, bool safe) {
+int GameMap::get_target_shortest_path_dir(pii position, int current_dir, pii target, bool safe) {
 	if (position == target) {
 		return 0;
 	}
@@ -383,7 +302,7 @@ int GameNode::get_target_shortest_path_dir(pii position, int current_dir, pii ta
 		vector<Sprite*> sps;
 		for (int i = vs - 1; i >= 0; i--) {
 			auto sp = Sprite::create();
-			snake_map[vt[i].first][vt[i].second].insert(sp);
+			snake_map[vt[i].first][vt[i].second] = sp;
 			sps.push_back(sp);
 		}
 		int length_step_min;
@@ -393,18 +312,17 @@ int GameNode::get_target_shortest_path_dir(pii position, int current_dir, pii ta
 		}
 		for (int i = vs - 1; i >= 0; i--) {
 			auto sp = sps[vs - 1 - i];
-			snake_map[vt[i].first][vt[i].second].erase(sp);
+			snake_map[vt[i].first][vt[i].second] = NULL;
 		}
 		return ret;
 	}
 	return -1;
 }
 
-int GameNode::get_target_longest_path_dir(pii position, int current_dir, pii target) {
+int GameMap::get_target_longest_path_dir(pii position, int current_dir, pii target) {
 	//return get_target_shortest_path_dir(position, current_dir, target);
 	int ret = -1;
 	int dis = -1;
-	auto game_node = MyGame::get_game_node();
 	int dis_map[max_game_width][max_game_height] = { 0 };
 	queue<pii> q;
 	q.push(target);
@@ -424,8 +342,8 @@ int GameNode::get_target_longest_path_dir(pii position, int current_dir, pii tar
 		if (abs(i - current_dir) == 2) {
 			continue;
 		}
-		auto nxt = game_node->get_next_position(position, (DIRECTION)i);
-		if (game_node->is_empty(nxt, 1) && get_target_shortest_path_dir(nxt, i, target) >= 0) {
+		auto nxt = this->get_next_position(position, (DIRECTION)i);
+		if (this->is_empty(nxt, 1) && get_target_shortest_path_dir(nxt, i, target) >= 0) {
 			int tmp = dis_map[nxt.first][nxt.second];
 			if (tmp > dis) {
 				dis = tmp;

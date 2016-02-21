@@ -19,7 +19,6 @@ Option* Option::create(string name) {
 Scene* Option::createScene(string name) {
 	auto scene = Scene::create();
 	auto layer = Option::create(name);
-	CCASSERT(layer, "layer of Option creating failed!");
 	scene->addChild(layer);
 	return scene;
 }
