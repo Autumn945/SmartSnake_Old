@@ -14,7 +14,8 @@ public:
 	DEFINE_VAR_GET(int, score);
 	DEFINE_VAR_GET(string, image);
 	DEFINE_VAR_GET(bool, is_died);
-	DEFINE_VAR_GET_ADD(int, food);
+	DEFINE_VAR_GET_SET(int, length);
+	DEFINE_VAR_GET(int, food);
 protected:
 	pii target;
 	int hunger;
@@ -24,11 +25,11 @@ public:
 	~Snake();
 	virtual bool init();
 	static Snake* create(ValueMap vm, GameMap* game_map);
-	int get_length();
 	bool go_ahead();
 	bool new_tail();
 	bool new_head();
 	bool check();
+	bool eat(int gid);
 	bool turn(DIRECTION dir);
 	bool go_die();
 	int get_tail_time_stamp();

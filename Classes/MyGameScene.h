@@ -4,6 +4,15 @@
 class GameMap;
 class Snake;
 
+class GOAL {
+public:
+	string src;
+	int n;
+	Node* get_node() {
+		auto ret = Node::create();
+	}
+};
+
 USING_NS_CC;
 using namespace std;
 class MyGame : public Layer {

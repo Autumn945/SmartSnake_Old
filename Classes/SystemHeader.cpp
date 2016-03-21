@@ -7,8 +7,9 @@ const float SCENE_TURN_TRANSITION_TIME = 0.3f;
 
 const int DIR_MASK = 3;
 const int UNIT = 32;
-const int TOP_LABEL_FONT_SIZE = 68;
-const int DEFAULT_LABEL_FONT_SIZE = 30;
+const int BIG_LABEL_FONT_SIZE = 68;
+const int MID_LABEL_FONT_SIZE = 58;
+const int SMALL_LABEL_FONT_SIZE = 30;
 const int DEFAULT_MENU_FONT_SIZE = 48;
 const int touch_move_len = 150;
 // origin is the left-up corner
@@ -17,15 +18,20 @@ const pii dir_vector[4] = { pii(0, -1), pii(1, 0), pii(0, 1), pii(-1, 0) };
 
 // string to chinese characters
 ValueMap UTF8_string;
+ValueMap user_info;
 Size visible_size;
 Vec2 origin;
 
 bool init() {
 	UTF8_string = FileUtils::getInstance()->getValueMapFromFile("UTF8_string.xml");
 	CCASSERT(UTF8_string.size(), "!!!!!!!!!!!!!!!!!! size of UTF8_string is 0");
+
+	user_info = FileUtils::getInstance()->getValueMapFromFile("user_info.xml");
 	
 	visible_size = Director::getInstance()->getVisibleSize();
 	origin = Director::getInstance()->getVisibleOrigin();
+
+
 	return true;
 }
 

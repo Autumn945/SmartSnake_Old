@@ -55,8 +55,9 @@ extern const float SCENE_TURN_TRANSITION_TIME;
 
 extern const int DIR_MASK;
 extern const int UNIT;
-extern const int TOP_LABEL_FONT_SIZE;
-extern const int DEFAULT_LABEL_FONT_SIZE;
+extern const int BIG_LABEL_FONT_SIZE;
+extern const int SMALL_LABEL_FONT_SIZE;
+extern const int MID_LABEL_FONT_SIZE;
 extern const int DEFAULT_MENU_FONT_SIZE;
 extern const int touch_move_len;
 const int max_game_width = 40;
@@ -65,6 +66,7 @@ const int max_game_height = 22;
 extern const pii dir_vector[4];
 
 extern ValueMap UTF8_string;
+extern ValueMap user_info;
 extern Size visible_size;
 extern Vec2 origin;
 

@@ -18,6 +18,18 @@
     <string>退出</string>
     <key>back</key>
     <string>返回</string>
+    <key>music</key>
+    <string>音乐:</string>
+    <key>soundEffects</key>
+    <string>音效:</string>
+    <key>controlModes</key>
+    <string>控制模式:</string>
+    <key>touch</key>
+    <string>点击</string>
+    <key>slide</key>
+    <string>滑动</string>
+    <key>clear_user_info</key>
+    <string>点击5次清除用户信息</string>
     
     <!--default string-->
     <key>undefinition</key>

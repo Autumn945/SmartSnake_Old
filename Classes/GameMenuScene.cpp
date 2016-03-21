@@ -29,21 +29,18 @@ bool GameMenu::init() {
 	auto snake_objs = snake_obj_group->getObjects();
 	for (auto _snake : snake_objs) {
 		auto snake = _snake.asValueMap();
-		auto sp = Snake::create(snake, world);
-		if (snake["type"].asString() == "player") {
-			if (player) {
-				log("more than one player, will use the last one");
-			}
-			player = sp;
+		if (user_info.count("game_menu_position_x") > 0) {
+			auto position = pii(user_info["game_menu_position_x"].asInt(), user_info["game_menu_position_y"].asInt());
+			auto pos = world->to_cocos_pos(position);
+			snake["x"] = pos.x;
+			snake["y"] = pos.y;
+			snake["direction"] = user_info["game_menu_direction"];
 		}
-		else {
-			//AI->push_back(sp);
-		}
-		world->addChild(sp);
+		player = Snake::create(snake, world);
 	}
 	CCASSERT(player, "player has not defined!");
-	player->add_food(2);
-	player->go_ahead();
+	player->set_length(4);
+	//player->go_ahead();
 	auto layer = LayerColor::create(Color4B::GRAY, world->getContentSize().width, world->getContentSize().height);
 	if (layer->isIgnoreAnchorPointForPosition()) {
 		layer->ignoreAnchorPointForPosition(false);
@@ -55,10 +52,6 @@ bool GameMenu::init() {
 		auto next_scene = MainMenu::createScene();
 		auto Transition_scene = TransitionCrossFade::create(SCENE_TURN_TRANSITION_TIME, next_scene);
 		Director::getInstance()->replaceScene(Transition_scene);
-		/*this->removeChild(game_map);
-		game_map = GameMap::createWithTMXFile("2.tmx");
-		CCASSERT(game_map, "gamenode create failed!");
-		this->addChild(game_map);*/
 	});
 	menu_back->setAnchorPoint(Vec2::ZERO);
 	auto menu = Menu::create(menu_back, NULL);
@@ -69,9 +62,6 @@ bool GameMenu::init() {
 	auto listener_touch = EventListenerTouchOneByOne::create();
 	Vec2 *touch_begin = new Vec2();
 	listener_touch->onTouchBegan = [this, touch_begin](Touch *t, Event *e) {
-		//log("touch began on (%.0f, %.0f)", t->getLocation().x, t->getLocation().y);
-		auto pr = player->convertToNodeSpace(t->getLocation());
-		log("(%.0f, %.0f)", pr.x, pr.y);
 		auto position = t->getLocation();
 		*touch_begin = position;
 		return true;
@@ -89,44 +79,49 @@ bool GameMenu::init() {
 		return DIRECTION::DOWN;
 	};
 	auto go_with_dir = [this](DIRECTION dir) {
-		if (!world->is_empty(world->get_next_position(player->get_position(), dir))) {
+		if (!world->is_empty(world->get_next_position(player->get_position(), dir)) || abs(dir - player->get_current_dir()) == 2) {
 			return;
 		}
 		player->turn(dir);
 		player->go_ahead();
 		if (game_map.count(player->get_position()) && game_map[player->get_position()].length() > 3) {
+			user_info["game_menu_nxt_pos_x"] = player->get_position().first;
+			user_info["game_menu_nxt_pos_y"] = player->get_position().second;
+			user_info["game_menu_nxt_dir"] = player->get_current_dir();
 			auto next_scene = MyGame::createScene(game_map[player->get_position()]);
 			auto Transition_scene = TransitionCrossFade::create(SCENE_TURN_TRANSITION_TIME, next_scene);
-			//Director::getInstance()->replaceScene(Transition_scene);
-			Director::getInstance()->pushScene(Transition_scene);
+			Director::getInstance()->replaceScene(Transition_scene);
+			//Director::getInstance()->pushScene(Transition_scene);
 		}
 	};
 	listener_touch->onTouchEnded = [this, set_dir, go_with_dir](Touch *t, Event *e) {
 		if (Rect(Vec2::ZERO, world->getContentSize()).containsPoint(world->convertToNodeSpace(t->getStartLocation()))) {
-			auto v = t->getLocation() - t->getStartLocation();
-			//log("touch ended, (%.0f, %.0f) --> (%.0f, %.0f)", t->getLocation().x, t->getLocation().y, t->getStartLocation().x, t->getStartLocation().y);
-			if (v.isZero()) {
-				v = t->getLocation() - (origin + visible_size / 2);
-				DIRECTION dir = set_dir(v);
-				//log("(%.0f, %.0f), dir = %d", t->getLocation().x, t->getLocation().y, dir);
-				go_with_dir(dir);
+			auto control_mode = user_info["control_mode"].asInt();
+			if (control_mode == 0 || control_mode == 2) {
+				auto v = t->getLocation() - t->getStartLocation();
+				if (v.isZero()) {
+					v = t->getLocation() - (origin + visible_size / 2);
+					DIRECTION dir = set_dir(v);
+					go_with_dir(dir);
+				}
 			}
 		}
 		return true;
 	};
 	listener_touch->onTouchMoved = [this, set_dir, touch_begin, go_with_dir](Touch *t, Event *e) {
-		//log("touch moved!!");
-		auto pos = t->getLocation();
-		auto start_pre = t->getPreviousLocation() - *touch_begin;
-		auto pre_now = pos - t->getPreviousLocation();
-		if (!start_pre.isZero() && abs(Vec2::angle(start_pre, pre_now)) > acos(-1.0f) / 4) {
-			*touch_begin = pos;
-		}
-		if (pos.distance(*touch_begin) > touch_move_len) {
-			//log("distence = %f", pos.distance(*touch_begin));
-			DIRECTION dir = set_dir(pos - *touch_begin);
-			go_with_dir(dir);
-			*touch_begin = pos;
+		auto control_mode = user_info["control_mode"].asInt();
+		if (control_mode == 0 || control_mode == 1) {
+			auto pos = t->getLocation();
+			auto start_pre = t->getPreviousLocation() - *touch_begin;
+			auto pre_now = pos - t->getPreviousLocation();
+			if (!start_pre.isZero() && abs(Vec2::angle(start_pre, pre_now)) > acos(-1.0f) / 4) {
+				*touch_begin = pos;
+			}
+			if (fabs(pos.x - touch_begin->x) > touch_move_len || fabs(pos.y - touch_begin->y) > touch_move_len) {
+				DIRECTION dir = set_dir(pos - *touch_begin);
+				go_with_dir(dir);
+				*touch_begin = pos;
+			}
 		}
 	};
 	auto listener_key = EventListenerKeyboard::create();
@@ -134,15 +129,23 @@ bool GameMenu::init() {
 		DIRECTION dir;
 		switch (key) {
 		case EventKeyboard::KeyCode::KEY_UP_ARROW:
+		case EventKeyboard::KeyCode::KEY_W:
+		case EventKeyboard::KeyCode::KEY_CAPITAL_W:
 			dir = DIRECTION::UP;
 			break;
 		case EventKeyboard::KeyCode::KEY_DOWN_ARROW:
+		case EventKeyboard::KeyCode::KEY_S:
+		case EventKeyboard::KeyCode::KEY_CAPITAL_S:
 			dir = DIRECTION::DOWN;
 			break;
 		case EventKeyboard::KeyCode::KEY_LEFT_ARROW:
+		case EventKeyboard::KeyCode::KEY_A:
+		case EventKeyboard::KeyCode::KEY_CAPITAL_A:
 			dir = DIRECTION::LEFT;
 			break;
 		case EventKeyboard::KeyCode::KEY_RIGHT_ARROW:
+		case EventKeyboard::KeyCode::KEY_D:
+		case EventKeyboard::KeyCode::KEY_CAPITAL_D:
 			dir = DIRECTION::RIGHT;
 			break;
 		default:
