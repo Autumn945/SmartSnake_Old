@@ -2,34 +2,57 @@
 
 USING_NS_CC;
 using namespace std;
-string MyGame::map_file_name;
 
+MyGame * MyGame::create(int mission_id) {
+	MyGame *pRet = new(std::nothrow) MyGame();
+	if (pRet && pRet->init(mission_id)) {
+		pRet->autorelease();
+		return pRet;
+	}
+	else {
+		delete pRet;
+		pRet = nullptr;
+		return nullptr;
+	}
+	return nullptr;
+}
 
-Scene* MyGame::createScene(string file_name) {
+Scene* MyGame::createScene(int mission_id) {
 	auto scene = Scene::create();
-	map_file_name = file_name;
-	auto layer = MyGame::create();
+	auto layer = MyGame::create(mission_id);
 	scene->addChild(layer);
 	return scene;
 }
 
-bool MyGame::init() {
+bool MyGame::init(int mission_id) {
 	if (!Layer::init()) {
 		return false;
 	}
 	log("my game init");
 	step = 0;
-	game_map = GameMap::createWithTMXFile(map_file_name);
-	CCASSERT(game_map, "gamemap create failed!");
+	auto mission = Mission::create(mission_id);
+	min_score = mission->flower[0];
+	this->setTag(mission_id);
+	game_map = mission->get_game_map();
+	game_map->setTag(mission_id);
+	log("%d", game_map);
 	this->addChild(game_map);
-	auto v = game_map->getProperty("speed");
-	if (v.isNull()) {
-		speed = 2;
-		log("property speed has not define!");
+	log("test");
+	auto speed_v = game_map->getProperty("speed");
+	auto bug_v = game_map->getProperty("bug");
+	auto flower_v = game_map->getProperty("flower");
+	if (speed_v.isNull()) {
+		speed_v = 2;
 	}
-	else {
-		speed = v.asInt();
+	if (bug_v.isNull()) {
+		bug_v = 0;
 	}
+	if (flower_v.isNull()) {
+		flower_v = 0;
+	}
+	speed = speed_v.asInt();
+	bug = bug_v.asInt();
+	flower = flower_v.asInt();
 	auto snake_obj_group = game_map->getObjectGroup("snake_objs");
 	CCASSERT(snake_obj_group, "snake_objs has not defined!");
 	auto snake_objs = snake_obj_group->getObjects();
@@ -38,7 +61,7 @@ bool MyGame::init() {
 		auto sp = Snake::create(snake, game_map);
 		if (snake["type"].asString() == "player") {
 			if (player) {
-				log("more than one player, will use the last one");
+				log("more than one player, we will use the last one");
 			}
 			player = sp;
 		}
@@ -47,6 +70,7 @@ bool MyGame::init() {
 		}
 	}
 	CCASSERT(player, "player has not defined!");
+	player->setUserObject(this);
 	//game_map->addChild(player);
 	auto label_score = Label::createWithSystemFont("score: 0", "Arial", SMALL_LABEL_FONT_SIZE);
 	label_score->setAnchorPoint(Vec2(0.5, 1));
@@ -70,15 +94,6 @@ bool MyGame::init() {
 	this->addChild(layer, -1);
 
 	auto menu_back = MenuItemFont::create(get_UTF8_string("back"), [this](Ref *sender) {
-		if (player->get_score() >= 3) {
-			//GameMenu::position = GameMenu::nxt_pos;
-			//GameMenu::direction = GameMenu::nxt_dir;
-			user_info["game_menu_position_x"] = user_info["game_menu_nxt_pos_x"];
-			user_info["game_menu_position_y"] = user_info["game_menu_nxt_pos_y"];
-			user_info["game_menu_direction"] = user_info["game_menu_nxt_dir"];
-			FileUtils::getInstance()->writeValueMapToFile(user_info, "user_info.xml");
-		}
-		//Director::getInstance()->popScene();
 		auto next_scene = GameMenu::createScene();
 		auto Transition_scene = TransitionCrossFade::create(SCENE_TURN_TRANSITION_TIME, next_scene);
 		Director::getInstance()->replaceScene(Transition_scene);
@@ -174,16 +189,17 @@ bool MyGame::init() {
 }
 
 void MyGame::update(float dt) {
+	const int length = 500;
 	if (speed < 1) {
 		speed = 1;
 	}
-	else if (speed > UNIT / 2) {
-		speed = UNIT / 2;
+	else if (speed > length / 2) {
+		speed = length / 2;
 	}
 	//speed = 16;
 	step += speed;
-	if (step >= UNIT) {
-		step -= UNIT;
+	if (step >= length) {
+		step -= length;
 		game_map->add_time_stamp(1);
 		// test
 		if (!player->get_is_died()) {
@@ -197,4 +213,16 @@ void MyGame::update(float dt) {
 			player->check();
 		}
 	}
+}
+
+void MyGame::game_over() {
+	string mission_name = String::createWithFormat("mission%d_", this->getTag())->getCString();
+	if (player->get_score() >= min_score && bug == 0 && flower == 0) {
+		user_info[mission_name + "score"] = max(player->get_score(), user_info[mission_name + "score"].asInt());
+		user_info[mission_name + "success"] = user_info[mission_name + "success"].asInt() + 1;
+	}
+	user_info[mission_name + "challenge"] = user_info[mission_name + "challenge"].asInt() + 1;
+	auto next_scene = GameMenu::createScene();
+	auto Transition_scene = TransitionCrossFade::create(SCENE_TURN_TRANSITION_TIME, next_scene);
+	Director::getInstance()->replaceScene(Transition_scene);
 }

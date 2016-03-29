@@ -2,26 +2,5 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"/>
 
 <plist version="1.0">
-    <dict>
-        <key>game_menu_position_x</key>
-        <integer>1</integer>
-        <key>game_menu_nxt_pos_x</key>
-        <integer>1</integer>
-        <key>control_mode</key>
-        <integer>1</integer>
-        <key>music</key>
-        <integer>0</integer>
-        <key>game_menu_nxt_dir</key>
-        <integer>0</integer>
-        <key>clear</key>
-        <integer>0</integer>
-        <key>soundEffects</key>
-        <integer>0</integer>
-        <key>game_menu_position_y</key>
-        <integer>16</integer>
-        <key>game_menu_nxt_pos_y</key>
-        <integer>16</integer>
-        <key>game_menu_direction</key>
-        <integer>0</integer>
-    </dict>
+    <dict/>
 </plist>

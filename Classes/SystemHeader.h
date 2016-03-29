@@ -60,7 +60,7 @@ extern const int SMALL_LABEL_FONT_SIZE;
 extern const int MID_LABEL_FONT_SIZE;
 extern const int DEFAULT_MENU_FONT_SIZE;
 extern const int touch_move_len;
-const int max_game_width = 40;
+const int max_game_width = 24;
 const int max_game_height = 22;
 
 extern const pii dir_vector[4];
@@ -79,3 +79,4 @@ extern Vec2 origin;
 #include "StorageScene.h"
 #include "OptionScene.h"
 #include "Snake.h"
+#include "MissionSprite.h"

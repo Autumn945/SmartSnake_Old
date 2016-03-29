@@ -196,7 +196,7 @@ bool Snake::eat(int gid) {
 	hunger = 0;
 	target = pii(-1, -1);
 	//score += MyGame::get_game_node()->get_speed();
-	score++;
+	score += 100;
 	snake_nodes->back()->setName("food");
 	snake_nodes->back()->setColor(Color3B::GRAY);
 	return false;
@@ -219,6 +219,8 @@ bool Snake::turn(DIRECTION dir) {
 
 bool Snake::go_die() {
 	is_died = true;
+	auto game = (MyGame*)getUserObject();
+	game->game_over();
 	/*if (snake_nodes->size() > 1) {
 		schedule([this](float dt) {
 			new_tail();

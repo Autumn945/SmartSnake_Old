@@ -50,37 +50,6 @@ bool GameMap::initWithTMXFile(string file_name) {
 	else {
 		this->getLayer("grass")->setLocalZOrder(1);
 	}
-
-	auto hole_obj_group = this->getObjectGroup("hole_objs");
-	//init hole_map;
-	auto width = float_to_int(this->getMapSize().width);
-	auto height = float_to_int(this->getMapSize().height);
-	for (int i = 0; i < width; i++) {
-		for (int j = 0; j < height; j++) {
-			hole_map[i][j] = pii(i, j);
-		}
-	}
-	if (hole_obj_group == NULL) {
-		log("object hole_objs of tile_map has not found!");
-	}
-	else {
-		auto hole_objs = hole_obj_group->getObjects();
-		for (auto _hole : hole_objs) {
-			auto hole = _hole.asValueMap();
-			auto pos = to_tile_map_pos(Vec2(hole["x"].asFloat(), hole["y"].asFloat()));
-			if (hole.count("to") == 0) {
-				log("property \"to\" of hole %s has not found!", hole["name"].asString().c_str());
-				continue;
-			}
-			auto to_hole = hole_obj_group->getObject(hole["to"].asString());
-			if (to_hole.size() == 0) {
-				log("hole %s has not found!", hole["to"].asString().c_str());
-				continue;
-			}
-			auto to = to_tile_map_pos(Vec2(to_hole["x"].asFloat(), to_hole["y"].asFloat()));
-			hole_map[pos.first][pos.second] = to;
-		}
-	}
 	return true;
 }
 
@@ -158,7 +127,7 @@ pii GameMap::get_next_position(pii now, DIRECTION dir) {
 	auto height = float_to_int(this->getMapSize().height);
 	auto x = (now.first + dir_vector[dir].first + width) % width;
 	auto y = (now.second + dir_vector[dir].second + height) % height; 
-	return hole_map[x][y];
+	return pii(x, y);
 }
 
 bool GameMap::is_empty(pii pos, int delay) {
