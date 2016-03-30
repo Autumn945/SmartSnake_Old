@@ -2,5 +2,26 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"/>
 
 <plist version="1.0">
-    <dict/>
+    <dict>
+        <key>mission1_score</key>
+        <integer>0</integer>
+        <key>mission1_success</key>
+        <integer>0</integer>
+        <key>mission1_challenge</key>
+        <integer>4</integer>
+        <key>mission_success1</key>
+        <integer>2</integer>
+        <key>control_mode</key>
+        <integer>0</integer>
+        <key>music</key>
+        <integer>0</integer>
+        <key>clear</key>
+        <integer>0</integer>
+        <key>soundEffects</key>
+        <integer>0</integer>
+        <key>mission_score1</key>
+        <integer>300</integer>
+        <key>mission_challenge1</key>
+        <integer>21</integer>
+    </dict>
 </plist>

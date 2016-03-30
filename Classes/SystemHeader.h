@@ -1,7 +1,5 @@
 #pragma once
 #include "cocos2d.h"
-#include "cocostudio/CocoStudio.h"
-#include "ui/CocosGUI.h"
 
 #define DEFINE_VAR_GET_SET(varType, varName) \
 	protected: varType varName;\
@@ -60,8 +58,11 @@ extern const int SMALL_LABEL_FONT_SIZE;
 extern const int MID_LABEL_FONT_SIZE;
 extern const int DEFAULT_MENU_FONT_SIZE;
 extern const int touch_move_len;
+Sprite* const virtual_snake = (Sprite*)1;
+const int foods_num = 8;
 const int max_game_width = 24;
 const int max_game_height = 22;
+extern const int food_score[foods_num];
 
 extern const pii dir_vector[4];
 
@@ -69,14 +70,3 @@ extern ValueMap UTF8_string;
 extern ValueMap user_info;
 extern Size visible_size;
 extern Vec2 origin;
-
-#include "MyGameScene.h"
-#include "GameMap.h"
-#include "AppDelegate.h"
-#include "HelloWorldScene.h"
-#include "MainMenuScene.h"
-#include "GameMenuScene.h"
-#include "StorageScene.h"
-#include "OptionScene.h"
-#include "Snake.h"
-#include "MissionSprite.h"

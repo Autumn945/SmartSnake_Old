@@ -1,2 +1,2 @@
 #pragma once
-#include "SystemHeader.h"
+#include "cocos2d.h"

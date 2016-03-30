@@ -1,4 +1,6 @@
 #include "GameMenuScene.h"
+#include "MainMenuScene.h"
+#include "MyGameScene.h"
 
 USING_NS_CC;
 using namespace std;

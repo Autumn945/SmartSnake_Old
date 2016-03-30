@@ -1,4 +1,7 @@
 #include "MainMenuScene.h"
+#include "SystemHeader.h"
+#include "GameMenuScene.h"
+#include "OptionScene.h"
 
 USING_NS_CC;
 //using namespace std;

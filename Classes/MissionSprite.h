@@ -1,5 +1,8 @@
 #pragma once
+#include "cocos2d.h"
 #include "SystemHeader.h"
+#include "GameMap.h"
+
 USING_NS_CC;
 class Mission: public Sprite {
 public:

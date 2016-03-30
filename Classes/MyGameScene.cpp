@@ -1,4 +1,8 @@
 #include "MyGameScene.h"
+#include "MissionSprite.h"
+#include "Snake.h"
+#include "SmartSnake.h"
+#include "GameMenuScene.h"
 
 USING_NS_CC;
 using namespace std;
@@ -29,51 +33,64 @@ bool MyGame::init(int mission_id) {
 		return false;
 	}
 	log("my game init");
-	step = 0;
 	auto mission = Mission::create(mission_id);
 	min_score = mission->flower[0];
+	score = 0;
 	this->setTag(mission_id);
 	game_map = mission->get_game_map();
 	game_map->setTag(mission_id);
 	log("%d", game_map);
 	this->addChild(game_map);
 	log("test");
-	auto speed_v = game_map->getProperty("speed");
 	auto bug_v = game_map->getProperty("bug");
 	auto flower_v = game_map->getProperty("flower");
-	if (speed_v.isNull()) {
-		speed_v = 2;
-	}
 	if (bug_v.isNull()) {
 		bug_v = 0;
 	}
 	if (flower_v.isNull()) {
 		flower_v = 0;
 	}
-	speed = speed_v.asInt();
 	bug = bug_v.asInt();
 	flower = flower_v.asInt();
+	for (int i = 0; i < foods_num; i++) {
+		int gid = i + 1;
+		auto v = game_map->getPropertiesForGID(gid).asValueMap();
+		if (v.count("cooldown") == 0) {
+			v["cooldown"] = 0;
+		}
+		cooldown[i] = v["cooldown"].asInt();
+		current_cooldown[i] = cooldown[i];
+	}
 	auto snake_obj_group = game_map->getObjectGroup("snake_objs");
 	CCASSERT(snake_obj_group, "snake_objs has not defined!");
 	auto snake_objs = snake_obj_group->getObjects();
-	for (auto _snake : snake_objs) {
-		auto snake = _snake.asValueMap();
-		auto sp = Snake::create(snake, game_map);
-		if (snake["type"].asString() == "player") {
-			if (player) {
-				log("more than one player, we will use the last one");
+	snakes.clear();
+	snakes.push_back(Snake::create("player", game_map));
+	CCASSERT(snakes[0], "snakes[0] has not defined!");
+	for (auto snake_v : snake_objs) {
+		auto snake_vm = snake_v.asValueMap();
+		auto snake_name = snake_vm["name"].asString();
+		if (snake_name != "player") {
+			auto snake_type = snake_vm["type"].asString();
+			if (snake_type == "player") {
+				snakes.push_back(Snake::create(snake_name, game_map));
 			}
-			player = sp;
-		}
-		else {
-			//AI->push_back(sp);
+			else {
+				auto snake = SmartSnake::create(snake_name, game_map);
+				if (snake_type == "follow") {
+					snake->type = Snake::SnakeType::t_follow;
+				}
+				else {
+					snake->type = Snake::SnakeType::t_enemy;
+				}
+				snakes.push_back(snake);
+			}
 		}
 	}
-	CCASSERT(player, "player has not defined!");
-	player->setUserObject(this);
-	//game_map->addChild(player);
+	snakes[0]->setUserObject(this);
+	//game_map->addChild(snakes[0]);
 	auto label_score = Label::createWithSystemFont("score: 0", "Arial", SMALL_LABEL_FONT_SIZE);
-	label_score->setAnchorPoint(Vec2(0.5, 1));
+	label_score->setAnchorPoint(Vec2(0.5, 0));
 	label_score->setPosition(this->getContentSize().width / 2, 0);
 	label_score->setName("score");
 	this->addChild(label_score);
@@ -132,7 +149,12 @@ bool MyGame::init(int mission_id) {
 				if (v.isZero()) {
 					v = t->getLocation() - (origin + visible_size / 2);
 					DIRECTION dir = set_dir(v);
-					player->turn(dir);
+					for (auto snake : snakes) {
+						auto snake_type = snake->get_type();
+						if (snake_type == Snake::SnakeType::t_player || snake_type == Snake::SnakeType::t_follow) {
+							snake->turn(dir);
+						}
+					}
 				}
 			}
 		}
@@ -149,7 +171,12 @@ bool MyGame::init(int mission_id) {
 			}
 			if (fabs(pos.x - touch_begin->x) > touch_move_len || fabs(pos.y - touch_begin->y) > touch_move_len) {
 				DIRECTION dir = set_dir(pos - *touch_begin);
-				player->turn(dir);
+				for (auto snake : snakes) {
+					auto snake_type = snake->get_type();
+					if (snake_type == Snake::SnakeType::t_player || snake_type == Snake::SnakeType::t_follow) {
+						snake->turn(dir);
+					}
+				}
 				*touch_begin = pos;
 			}
 		}
@@ -181,7 +208,7 @@ bool MyGame::init(int mission_id) {
 		default:
 			return;
 		}
-		player->turn(dir);
+		snakes[0]->turn(dir);
 	};
 	Director::getInstance()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(listener_touch, this);
 	Director::getInstance()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(listener_key, this);
@@ -189,39 +216,41 @@ bool MyGame::init(int mission_id) {
 }
 
 void MyGame::update(float dt) {
-	const int length = 500;
-	if (speed < 1) {
-		speed = 1;
-	}
-	else if (speed > length / 2) {
-		speed = length / 2;
-	}
-	//speed = 16;
-	step += speed;
-	if (step >= length) {
-		step -= length;
-		game_map->add_time_stamp(1);
-		// test
-		if (!player->get_is_died()) {
-			//player->act();
-			player->go_ahead();
-			auto label = (Label*)this->getChildByName("score");
-			label->setString("score: " + Value(player->get_score()).asString());
-		}
-		// test
-		if (!player->get_is_died()) {
-			player->check();
+	auto fps = Director::getInstance()->getAnimationInterval();
+	auto food_layer = game_map->getLayer("food");
+	CCASSERT(food_layer, "food_layer has not defined!");
+	for (int i = 0; i < foods_num; i++) {
+		if (cooldown[i] > 0) {
+			current_cooldown[i] -= fps;
+			if (current_cooldown[i] < 0) {
+				current_cooldown[i] = cooldown[i];
+				auto pos = game_map->get_random_empty_point();
+				if (pos.first >= 0) {
+					food_layer->setTileGID(i + 1, Vec2(pos.first, pos.second));
+				}
+			}
 		}
 	}
+	for (auto snake : snakes) {
+		snake->go_step();
+	}
+	for (auto snake : snakes) {
+		if (!snake->get_is_checked()) {
+			snake->check();
+		}
+	}
+	auto label = (Label*)this->getChildByName("score");
+	label->setString("score: " + Value(get_score()).asString());
 }
 
 void MyGame::game_over() {
-	string mission_name = String::createWithFormat("mission%d_", this->getTag())->getCString();
-	if (player->get_score() >= min_score && bug == 0 && flower == 0) {
-		user_info[mission_name + "score"] = max(player->get_score(), user_info[mission_name + "score"].asInt());
-		user_info[mission_name + "success"] = user_info[mission_name + "success"].asInt() + 1;
+	string id_string = Value(this->getTag()).asString();
+	if (get_score() >= min_score && bug == 0 && flower == 0) {
+		user_info["mission_score" + id_string] = max(get_score(), user_info["mission_score" + id_string].asInt());
+		user_info["mission_success" + id_string] = user_info["mission_success" + id_string].asInt() + 1;
 	}
-	user_info[mission_name + "challenge"] = user_info[mission_name + "challenge"].asInt() + 1;
+	user_info["mission_challenge" + id_string] = user_info["mission_challenge" + id_string].asInt() + 1;
+	FileUtils::getInstance()->writeValueMapToFile(user_info, "user_info.xml");
 	auto next_scene = GameMenu::createScene();
 	auto Transition_scene = TransitionCrossFade::create(SCENE_TURN_TRANSITION_TIME, next_scene);
 	Director::getInstance()->replaceScene(Transition_scene);

@@ -1,5 +1,5 @@
 #pragma once
-#include "SystemHeader.h"
+#include "cocos2d.h"
 USING_NS_CC;
 using namespace std;
 

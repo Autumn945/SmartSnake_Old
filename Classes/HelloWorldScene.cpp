@@ -1,4 +1,6 @@
 #include "HelloWorldScene.h"
+#include "MainMenuScene.h"
+#include "SystemHeader.h"
 
 USING_NS_CC;
 using namespace std;

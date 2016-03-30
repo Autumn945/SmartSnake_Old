@@ -1,10 +1,9 @@
 #pragma once
-#include "SystemHeader.h"
+#include "cocos2d.h"
+#include "MissionSprite.h"
 
 USING_NS_CC;
 using namespace std;
-
-class Mission;
 
 class GameMenu : public Layer {
 public:

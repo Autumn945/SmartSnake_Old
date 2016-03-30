@@ -11,7 +11,8 @@ const int BIG_LABEL_FONT_SIZE = 68;
 const int MID_LABEL_FONT_SIZE = 58;
 const int SMALL_LABEL_FONT_SIZE = 30;
 const int DEFAULT_MENU_FONT_SIZE = 48;
-const int touch_move_len = 50;
+const int touch_move_len = 50; 
+const int food_score[foods_num] = { 150, 150, 100, 100, 200, 200, 200, -100 };
 // origin is the left-up corner
 // 0->up, 1->right, 2->down, 3->right
 const pii dir_vector[4] = { pii(0, -1), pii(1, 0), pii(0, 1), pii(-1, 0) };

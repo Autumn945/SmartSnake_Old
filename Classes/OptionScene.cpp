@@ -1,4 +1,6 @@
 #include "OptionScene.h"
+#include "SystemHeader.h"
+#include "MainMenuScene.h"
 
 USING_NS_CC;
 using namespace std; 
@@ -31,6 +33,7 @@ bool Option::init() {
 	}
 	//add menu back_to_main_menu
 	auto menu_back = MenuItemFont::create(get_UTF8_string("back"), [](Ref *sender) {
+		FileUtils::getInstance()->writeValueMapToFile(user_info, "user_info.xml");
 		auto next_scene = MainMenu::createScene(); 
 		auto Transition_scene = TransitionCrossFade::create(SCENE_TURN_TRANSITION_TIME, next_scene); 
 		Director::getInstance()->replaceScene(Transition_scene);

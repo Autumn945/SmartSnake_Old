@@ -1,5 +1,6 @@
 #include "GameMap.h"
 #include "stdlib.h"
+#include "Snake.h"
 
 USING_NS_CC;
 
@@ -35,8 +36,6 @@ bool GameMap::initWithTMXFile(string file_name) {
 		return false;
 	}
 	log("GameMap init");
-
-	time_stamp = 0;
 
 	this->setAnchorPoint(Vec2(0.5, 1));
 	this->setPosition(Vec2(origin.x + visible_size.width / 2, origin.y + visible_size.height));
@@ -170,7 +169,7 @@ vector<pii> GameMap::get_foods() {
 
 pii GameMap::get_accessible_last_snake_node(pii position, int dir, int &lenght_step_min) {
 	pii ret = position;
-	lenght_step_min = this->get_time_stamp();
+	lenght_step_min = 0x3fffff;
 	bool vis[max_game_width][max_game_height] = { false };
 	auto wall = this->getLayer("wall");
 	auto snake_map = this->get_snake_map();
@@ -186,19 +185,20 @@ pii GameMap::get_accessible_last_snake_node(pii position, int dir, int &lenght_s
 				continue;
 			}
 			vis[nxt.first][nxt.second] = true;
-			if (wall != NULL && wall->getTileGIDAt(Vec2(nxt.first, nxt.second)) > 0) {
+			if ((wall != NULL && wall->getTileGIDAt(Vec2(nxt.first, nxt.second)) > 0)
+				|| snake_map[nxt.first][nxt.second] == virtual_snake) {
 				continue;
 			}
-			if (!snake_map[nxt.first][nxt.second]) {
+			if (snake_map[nxt.first][nxt.second]) {
 				int time_stamp_max = -step;
 				auto sp = snake_map[nxt.first][nxt.second];
-					auto snake = (Snake*)sp->getParent();
-					if (snake == NULL) {
-						time_stamp_max = 0x3f3f3f3f;
-					}
-					else {
-						time_stamp_max = sp->getTag() - snake->get_tail_time_stamp() - step;
-					}
+				auto snake = (Snake*)sp->getParent();
+				if (snake == NULL) {
+					time_stamp_max = 0x3f3f3f3f;
+				}
+				else {
+					time_stamp_max = sp->getTag() - snake->get_tail_time_stamp() - step;
+				}
 				if ((step > 1 || time_stamp_max < 0) && time_stamp_max < lenght_step_min) {
 					lenght_step_min = time_stamp_max;
 					ret = nxt;
@@ -268,11 +268,10 @@ int GameMap::get_target_shortest_path_dir(pii position, int current_dir, pii tar
 		}
 		target = vt[0];
 		int vs = vt.size();
-		vector<Sprite*> sps;
 		for (int i = vs - 1; i >= 0; i--) {
-			auto sp = Sprite::create();
-			snake_map[vt[i].first][vt[i].second] = sp;
-			sps.push_back(sp);
+			if (snake_map[vt[i].first][vt[i].second] == NULL) {
+				snake_map[vt[i].first][vt[i].second] = virtual_snake;
+			}
 		}
 		int length_step_min;
 		auto tmp = get_accessible_last_snake_node(target, vis[target.first][target.second] - 1, length_step_min);
@@ -280,8 +279,9 @@ int GameMap::get_target_shortest_path_dir(pii position, int current_dir, pii tar
 			ret = -1;
 		}
 		for (int i = vs - 1; i >= 0; i--) {
-			auto sp = sps[vs - 1 - i];
-			snake_map[vt[i].first][vt[i].second] = NULL;
+			if (snake_map[vt[i].first][vt[i].second] == virtual_snake) {
+				snake_map[vt[i].first][vt[i].second] = NULL;
+			}
 		}
 		return ret;
 	}

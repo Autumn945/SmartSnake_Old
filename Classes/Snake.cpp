@@ -1,4 +1,6 @@
 #include "Snake.h"
+#include "SystemHeader.h"
+#include "MyGameScene.h"
 
 #define HEAD Rect(0, 0, UNIT, UNIT)
 #define BODY Rect(0, UNIT, UNIT, UNIT)
@@ -6,9 +8,9 @@
 #define TAIL Rect(UNIT, 3 * UNIT, UNIT, UNIT)
 
 //snake is player if type = 0
-Snake* Snake::create(ValueMap vm, GameMap* game_map) {
-	Snake *pRet = new(std::nothrow) Snake(vm, game_map);
-	if (pRet && pRet->init()) {
+Snake* Snake::create(string name, GameMap* game_map) {
+	Snake *pRet = new(std::nothrow) Snake();
+	if (pRet && pRet->init(name, game_map)) {
 		pRet->autorelease();
 		return pRet;
 	}
@@ -19,39 +21,40 @@ Snake* Snake::create(ValueMap vm, GameMap* game_map) {
 	}
 }
 
-Snake::Snake(ValueMap vm, GameMap* game_map) {
-	log("start create a snake");
-	if (vm.empty()) {
-		log("create snake failed!");
-	}
-	this->game_map = game_map;
-	position = game_map->to_tile_map_pos(Vec2(vm["x"].asFloat(), vm["y"].asFloat()));
-	if (vm.count("direction") == 0) {
+bool Snake::init(string name, GameMap* game_map) {
+	log("snake init");
+	auto snake = game_map->getObjectGroup("snake_objs")->getObject(name);
+	position = game_map->to_tile_map_pos(Vec2(snake["x"].asFloat(), snake["y"].asFloat()));
+	if (snake.count("direction") == 0) {
 		log("direction of snake has not define");
-		vm["direction"] = Value(DIRECTION::UP);
+		snake["direction"] = Value(DIRECTION::UP);
 	}
-	current_dir = (DIRECTION)vm["direction"].asInt();
-	if (vm.count("image") == 0) {
+	if (snake.count("image") == 0) {
 		log("image of snake has not define");
-		vm["image"] = Value("snake0.png");
+		snake["image"] = Value("snake0.png");
 	}
-	this->image = vm["image"].asString();
-	this->setName(vm["name"].asString());
-	log("(%d, %d), dir = %d, image = %s", position.first, position.second, current_dir, vm["image"].asString().c_str());
-}
-
-bool Snake::init() {
-	if (!SpriteBatchNode::initWithFile(this->image)) {
+	if (snake.count("speed") == 0) {
+		log("speed of snake has not define");
+		snake["speed"] = 40;
+	}
+	current_dir = (DIRECTION)snake["direction"].asInt();
+	speed = snake["speed"].asInt();
+	image = "snake0.png";
+	if (get_type() == t_enemy) {
+		image = "snake1.png";
+	}
+	if (!SpriteBatchNode::initWithFile(image)) {
 		return false;
 	}
-	log("snake init");
+	this->game_map = game_map;
+	this->setName(name);
 	is_died = false;
 	snake_nodes = new queue<Sprite*>();
 	turn_list = new queue<DIRECTION>();
 	length = 2;
-	score = 0;
 	hunger = 0;
-	target = pii(-1, -1);
+	step = 0;
+	time_stamp = 0;
 	new_head();
 	this->setAnchorPoint(Vec2::ZERO);
 	this->setPosition(Vec2::ZERO + Vec2(UNIT, UNIT) / 2);
@@ -63,6 +66,22 @@ Snake::~Snake() {
 	delete turn_list;
 	delete snake_nodes;
 	log("deleted a snake");
+}
+
+void Snake::go_step() {
+	const int step_length = 500;
+	/*if (speed < 1) {
+		speed = 1;
+	}
+	else if (speed > step_length / 2) {
+		speed = step_length / 2;
+	}*/
+	step += speed;
+	if (step >= step_length) {
+		step -= step_length;
+		add_time_stamp(1);
+		this->go_ahead();
+	}
 }
 
 bool Snake::go_ahead() {
@@ -81,6 +100,7 @@ bool Snake::go_ahead() {
 		new_tail();
 	}
 	new_head();
+	is_checked = false;
 	hunger++;
 	return true;
 }
@@ -97,7 +117,12 @@ bool Snake::new_tail() {
 		return false;
 	}
 	auto pos = game_map->to_tile_map_pos(tail->getPosition());
+	if (game_map->get_snake_map()[pos.first][pos.second] != tail) {
+		log("----------------------->  %d-> %d", clock(), game_map->get_snake_map()[pos.first][pos.second]);
+	}
+	auto test_t = game_map->get_snake_map()[pos.first][pos.second];
 	game_map->get_snake_map()[pos.first][pos.second] = NULL;
+	//log("empty %d(%d) -> (%d, %d)", tail, test_t, pos.first, pos.second);
 	this->removeChild(tail, true);
 	snake_nodes->pop();
 	if (!snake_nodes->empty()) {
@@ -136,14 +161,30 @@ bool Snake::new_head() {
 		position = game_map->get_next_position(position, current_dir);
 	}
 	auto head = Sprite::create(this->image, HEAD);
-	head->setTag(game_map->get_time_stamp());
+	//log("create %d -> (%d, %d)", head, position.first, position.second);
+	head->setTag(get_time_stamp());
 	head->setPosition(game_map->to_cocos_pos(position));
 	//log("%s arrived (%d, %d)", this->getName().c_str(), position.first, position.second);
 	head->setRotation(90 * current_dir);
 	snake_nodes->push(head);
-	if (!game_map->get_snake_map()[position.first][position.second]) {
+	if (game_map->get_snake_map()[position.first][position.second] == NULL) {
 		game_map->get_snake_map()[position.first][position.second] = head;
+		//log("OC %d -> (%d, %d)", head, position.first, position.second);
+		//log("%d-> %d", clock(), head);
 	}
+	/*for (int i = 0; i < game_map->getmapsize().height; i++) {
+		string prt = "";
+		for (int j = 0; j < game_map->getmapsize().width; j++) {
+			if (game_map->get_snake_map()[j][i]) {
+				prt += '*';
+			}
+			else {
+				prt += '.';
+			}
+		}
+		log("%s", prt.c_str());
+	}
+	log("\n");*/
 	this->addChild(head);
 	return true;
 }
@@ -152,14 +193,18 @@ bool Snake::check() {
 	if (is_died) {
 		return false;
 	}
+	is_checked = true;
 	auto wall = game_map->getLayer("wall");
 	if (wall != NULL && wall->getTileGIDAt(Vec2(position.first, position.second)) > 0) {
 		log("%s p wall", this->getName().c_str());
-		go_die();
+		this->go_die();
 		return true;
 	}
 	auto sp = game_map->get_snake_map()[position.first][position.second];
-	if (sp && sp != this->snake_nodes->back()) {
+	if (sp == NULL) {
+		game_map->get_snake_map()[position.first][position.second] = this->snake_nodes->back();
+	}
+	else if (sp != this->snake_nodes->back()) {
 		auto snk = (Snake*)sp->getParent();
 		if (snk == NULL) {
 			log("%s p NULL", this->getName().c_str());
@@ -167,7 +212,7 @@ bool Snake::check() {
 		else {
 			log("%s p %s", this->getName().c_str(), snk->getName().c_str());
 		}
-		go_die();
+		this->go_die();
 		return true;
 	}
 	auto food = game_map->getLayer("food");
@@ -175,18 +220,6 @@ bool Snake::check() {
 		auto gid = food->getTileGIDAt(Vec2(position.first, position.second));
 		this->eat(gid);
 		food->setTileGID(0, Vec2(position.first, position.second));
-		schedule([this, gid, food](float dt) {
-			/*auto points = MyGame::get_game_node()->get_accessible_points(position);
-			if (points.empty()) {
-				return;
-			}
-			auto pos = points[random(0, (int)points.size() - 1)];
-			food->setTileGID(gid, Vec2(pos.first, pos.second));*/
-			auto pos = game_map->get_random_empty_point();
-			if (pos.first >= 0) {
-				food->setTileGID(gid, Vec2(pos.first, pos.second));
-			}
-		}, 0, 0, 0, "new food");
 	}
 	return true;
 }
@@ -194,11 +227,42 @@ bool Snake::check() {
 bool Snake::eat(int gid) {
 	//log("%s eat", this->getName().c_str());
 	hunger = 0;
-	target = pii(-1, -1);
 	//score += MyGame::get_game_node()->get_speed();
-	score += 100;
 	snake_nodes->back()->setName("food");
 	snake_nodes->back()->setColor(Color3B::GRAY);
+	auto food_gid = (MyGame::FOOD)gid;
+	auto game = (MyGame*)game_map->getParent();
+	game->add_score(food_score[gid - 1]);
+	switch (food_gid) {
+	case MyGame::food_green_apple:
+		this->add_speed(1);
+		break;
+	case MyGame::food_red_apple:
+		this->add_speed(-1);
+		break;
+	case MyGame::food_bird:
+		break;
+	case MyGame::food_cola:
+		break;
+	case MyGame::food_bug:
+		game->bug--; 
+		schedule([this, gid](float dt) {
+			auto pos = game_map->get_random_empty_point();
+			if (pos.first >= 0) {
+				game_map->getLayer("food")->setTileGID(gid, Vec2(pos.first, pos.second));
+			}
+		}, 0, 0, 0, "new food");
+		break;
+	case MyGame::food_flower:
+		game->flower--;
+		break;
+	case MyGame::food_heart:
+		break;
+	case MyGame::food_shit:
+		break;
+	default:
+		break;
+	}
 	return false;
 }
 
@@ -221,14 +285,6 @@ bool Snake::go_die() {
 	is_died = true;
 	auto game = (MyGame*)getUserObject();
 	game->game_over();
-	/*if (snake_nodes->size() > 1) {
-		schedule([this](float dt) {
-			new_tail();
-		}, 1 / 30.0f, snake_nodes->size() - 1, 0, "go die");
-	}*/
-	/*while (!snake_nodes->empty()) {
-		new_tail();
-	}*/
 	return false;
 }
 
@@ -236,54 +292,9 @@ int Snake::get_tail_time_stamp() {
 	if (snake_nodes->empty()) {
 		return 0;
 	}
-	return snake_nodes->front()->getTag() -food;
+	return snake_nodes->front()->getTag();
 }
 
-bool Snake::act() {
-	auto begin_time = clock();
-	if (!turn_list->empty()) {
-		return false;
-	}
-	auto width = float_to_int(game_map->getMapSize().width);
-	auto height = float_to_int(game_map->getMapSize().height);
-	if (get_length() < (width - 2) * (height - 2) * 0.6 || hunger > width * height) {
-		bool safe = true;
-		if (hunger > width * height * 3) {
-			safe = false;
-		}
-		if (0 && target.first >= 0) {
-			auto dir = game_map->get_target_shortest_path_dir(position, current_dir, target, safe);
-			if (dir >= 0) {
-				turn_list->push((DIRECTION)dir);
-				log("act 1, dir = %d, delay = %d", dir, clock() - begin_time);
-				return true;
-			}
-		}
-		else {
-			auto targets = game_map->get_foods();
-			for (auto t : targets) {
-				auto dir = game_map->get_target_shortest_path_dir(position, current_dir, t, safe);
-				if (dir >= 0) {
-					target = t;
-					turn_list->push((DIRECTION)dir);
-					//log("act 2, dir = %d, delay = %d", dir, clock() - begin_time);
-					return true;
-				}
-			}
-		}
-	}
-	int lenght_step_min;
-	auto t = game_map->get_accessible_last_snake_node(position, current_dir, lenght_step_min);
-	auto dir = game_map->get_target_longest_path_dir(position, current_dir, t);
-	if (dir >= 0) {
-		//log("go to (%d, %d)", t.first, t.second);
-		turn_list->push((DIRECTION)dir);
-		//log("act 3, dir = %d, delay = %d", dir, clock() - begin_time);
-		return true;
-	}
-	log("!!!!!!!!!!!!!!!failed!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-	//go_die();
-	dir = random(0, 3);
-	this->turn((DIRECTION)dir);
-	return false;
+Snake::SnakeType Snake::get_type() {
+	return t_player;
 }

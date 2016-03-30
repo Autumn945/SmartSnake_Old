@@ -27,7 +27,7 @@ bool Mission::init(int id) {
 	if (!Sprite::initWithFile("mission.png")) {
 		return false;
 	}
-	game_map = GameMap::createWithTMXFile(String::createWithFormat("%d.tmx", id)->getCString());
+	game_map = GameMap::createWithTMXFile(Value(id).asString() + ".tmx");
 	if (!game_map) {
 		log("not found %d.tmx", id);
 		return false;
@@ -40,19 +40,19 @@ bool Mission::init(int id) {
 	sscanf(scores_v.asString().c_str(), "%d,%d,%d", &flower[0], &flower[1], &flower[2]);
 	log("%d,%d,%d", flower[0], flower[1], flower[2]);
 	//
-	string mission_name = String::createWithFormat("mission%d_", id)->getCString();
-	if (user_info.count(mission_name + "score") == 0) {
-		user_info[mission_name + "score"] = 0;
+	string id_string = Value(id).asString();
+	if (user_info.count("mission_score" + id_string) == 0) {
+		user_info["mission_score" + id_string] = 0;
 	}
-	if (user_info.count(mission_name + "success") == 0) {
-		user_info[mission_name + "success"] = 0;
+	if (user_info.count("mission_success" + id_string) == 0) {
+		user_info["mission_success" + id_string] = 0;
 	}
-	if (user_info.count(mission_name + "challenge") == 0) {
-		user_info[mission_name + "challenge"] = 0;
+	if (user_info.count("mission_challenge" + id_string) == 0) {
+		user_info["mission_challenge" + id_string] = 0;
 	}
-	score = user_info[mission_name + "score"].asInt();
-	success = user_info[mission_name + "success"].asInt();
-	challenge = user_info[mission_name + "challenge"].asInt();
+	score = user_info["mission_score" + id_string].asInt();
+	success = user_info["mission_success" + id_string].asInt();
+	challenge = user_info["mission_challenge" + id_string].asInt();
 	auto center = (Vec2)this->getContentSize() / 2;
 	float y = this->getContentSize().height - 10;
 	auto name = Label::createWithSystemFont(String::createWithFormat(get_UTF8_string("mission_id").c_str(), id)->getCString()
@@ -72,7 +72,7 @@ bool Mission::init(int id) {
 		this->addChild(sp);
 	}
 	y -= sp_f->getContentSize().height;
-	auto max_score = Label::createWithSystemFont(get_UTF8_string("max_score") + String::createWithFormat("%d", score)->getCString()
+	auto max_score = Label::createWithSystemFont(get_UTF8_string("max_score") + Value(score).asString()
 		, "abc", SMALL_LABEL_FONT_SIZE);
 	max_score->setPosition(center.x, y);
 	max_score->setAnchorPoint(Vec2(0.5, 1));
