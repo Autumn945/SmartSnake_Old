@@ -24,6 +24,8 @@
     <string>音效:</string>
     <key>max_score</key>
     <string>最高分:</string>
+    <key>score</key>
+    <string>得分:</string>
     <key>success/challenge</key>
     <string>过关次数/挑战次数:</string>
     <key>controlModes</key>
@@ -36,6 +38,8 @@
     <string>点击5次清除用户信息</string>
     <key>mission_id</key>
     <string>第%d关</string>
+    <key>goal</key>
+    <string>目标：</string>
     
     <!--default string-->
     <key>undefinition</key>

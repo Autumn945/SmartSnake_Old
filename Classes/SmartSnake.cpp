@@ -24,60 +24,37 @@ bool SmartSnake::init(string name, GameMap* game_map) {
 	return true;
 }
 
-bool SmartSnake::eat(int gid) {
-	hunger = 0;
+void SmartSnake::eat_reward(int gid) {
 	target = pii(-1, -1);
-	snake_nodes->back()->setName("food");
-	snake_nodes->back()->setColor(Color3B::GRAY);
-	auto food_gid = (MyGame::FOOD)gid;
-	auto game = (MyGame*)game_map->getParent();
-	switch (food_gid) {
-	case MyGame::food_green_apple:
-		this->add_speed(1);
-		break;
-	case MyGame::food_red_apple:
-		this->add_speed(-1);
-		break;
-	case MyGame::food_bird:
-		break;
-	case MyGame::food_cola:
-		break;
-	case MyGame::food_bug:
-		schedule([this, gid](float dt) {
-			auto pos = game_map->get_random_empty_point();
-			if (pos.first >= 0) {
-				game_map->getLayer("food")->setTileGID(gid, Vec2(pos.first, pos.second));
-			}
-		}, 0, 0, 0, "new food");
-		break;
-	case MyGame::food_flower:
-		break;
-	case MyGame::food_heart:
-		break;
-	case MyGame::food_shit:
-		break;
-	default:
-		break;
-	}
-	return false;
 }
 
 bool SmartSnake::go_die() {
 	is_died = true;
+	auto game = (MyGame*)game_map->getParent();
+	game->kill--;
+	auto label = (Label*)game->getChildByName("label_kill");
+	if (label) {
+		if (game->kill > 0) {
+			label->setString(" x" + Value(game->kill).asString());
+		}
+		else {
+			label->setString(" ok!");
+		}
+	}
 	/*auto game = (MyGame*)getUserObject();
 	if (snake_nodes->size() > 1) {
 		schedule([this](float dt) {
 			new_tail();
 		}, 1 / 30.0f, snake_nodes->size() - 1, 0, "go die");
-	}
+	}*/
 	while (!snake_nodes->empty()) {
 	new_tail();
-	}*/
+	}
 	return true;
 }
 
 bool SmartSnake::go_ahead() {
-	if (type == Snake::SnakeType::t_enemy) {
+	if (!is_died && type == Snake::SnakeType::t_enemy) {
 		act();
 	}
 	if (!Snake::go_ahead()) {

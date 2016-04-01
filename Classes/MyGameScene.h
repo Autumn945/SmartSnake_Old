@@ -9,6 +9,10 @@ class Snake;
 USING_NS_CC;
 using namespace std;
 class MyGame : public Layer {
+private:
+	TMXLayer* food_layer;
+	Sprite* progress[foods_num];
+	float progress_length;
 public:
 	enum FOOD {
 		food_green_apple = 1
@@ -20,8 +24,8 @@ public:
 		, food_heart
 		, food_shit
 	};
-	int cooldown[foods_num];
-	float current_cooldown[foods_num];
+	int remain_num[foods_num];
+	float cooldown[foods_num], current_cooldown[foods_num];
 	DEFINE_VAR_GET_ADD(int, score);
 
 	static Scene* createScene(int mission_id);
@@ -30,7 +34,7 @@ public:
 	virtual void update(float dt);
 	void game_over();
 
-	int min_score, bug, flower;
+	int min_score, bug, flower, kill;
 	GameMap* game_map;
 	vector<Snake*> snakes;
 };

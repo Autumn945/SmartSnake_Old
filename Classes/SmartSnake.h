@@ -13,7 +13,7 @@ protected:
 public:
 	virtual bool init(string name, GameMap* game_map);
 	static SmartSnake* create(string name, GameMap* game_map);
-	virtual bool eat(int gid);
+	virtual void eat_reward(int gid);
 	virtual bool go_die();
 	virtual bool go_ahead();
 	virtual SnakeType get_type();

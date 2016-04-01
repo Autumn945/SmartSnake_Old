@@ -37,6 +37,7 @@ public:
 	virtual bool new_tail();
 	virtual bool new_head();
 	virtual bool check();
+	virtual void eat_reward(int gid);
 	virtual bool eat(int gid);
 	virtual bool turn(DIRECTION dir);
 	virtual bool go_die();

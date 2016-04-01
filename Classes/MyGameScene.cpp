@@ -44,25 +44,58 @@ bool MyGame::init(int mission_id) {
 	log("test");
 	auto bug_v = game_map->getProperty("bug");
 	auto flower_v = game_map->getProperty("flower");
+	auto kill_v = game_map->getProperty("kill");
 	if (bug_v.isNull()) {
 		bug_v = 0;
 	}
 	if (flower_v.isNull()) {
 		flower_v = 0;
 	}
+	if (kill_v.isNull()) {
+		kill_v = 0;
+	}
 	bug = bug_v.asInt();
 	flower = flower_v.asInt();
+	kill = kill_v.asInt();
+	float x = origin.x + visible_size.width - 8 * UNIT + 10, y = origin.y + visible_size.height - 10;
 	for (int i = 0; i < foods_num; i++) {
 		int gid = i + 1;
 		auto v = game_map->getPropertiesForGID(gid).asValueMap();
+		if (v.count("max_num") == 0) {
+			v["max_num"] = 0;
+		}
+		remain_num[i] = v["max_num"].asInt();
 		if (v.count("cooldown") == 0) {
 			v["cooldown"] = 0;
 		}
-		cooldown[i] = v["cooldown"].asInt();
-		current_cooldown[i] = cooldown[i];
+		cooldown[i] = max(v["cooldown"].asFloat(), 1.0f);
+		current_cooldown[i] = 0;
+		auto sp = Sprite::create("progress.png");
+		progress_length = sp->getContentSize().width;
+		if (remain_num[i] >= 0) {
+			auto sprite = Sprite::create("foods.png", Rect(i % 4 * UNIT, i / 4 * UNIT, UNIT, UNIT));
+			sprite->setAnchorPoint(Vec2(0, 1));
+			sprite->setPosition(x, y);
+			y -= UNIT + 5;
+			this->addChild(sprite);
+			sprite = Sprite::create("progress.png");
+			sprite->setAnchorPoint(Vec2(0, 1));
+			sprite->setPosition(x, y);
+			//y -= sprite->getContentSize().height + 5;
+			this->addChild(sprite);
+			sprite = Sprite::create("progress_f.png");
+			sprite->setAnchorPoint(Vec2(0, 1));
+			sprite->setPosition(x, y);
+			y -= sprite->getContentSize().height + 10;
+			sprite->setVisible(false);
+			progress[i] = sprite;
+			this->addChild(sprite);
+		}
 	}
 	auto snake_obj_group = game_map->getObjectGroup("snake_objs");
 	CCASSERT(snake_obj_group, "snake_objs has not defined!");
+	food_layer = game_map->getLayer("food");
+	CCASSERT(food_layer, "food_layer has not defined!");
 	auto snake_objs = snake_obj_group->getObjects();
 	snakes.clear();
 	snakes.push_back(Snake::create("player", game_map));
@@ -87,18 +120,55 @@ bool MyGame::init(int mission_id) {
 			}
 		}
 	}
-	snakes[0]->setUserObject(this);
-	//game_map->addChild(snakes[0]);
-	auto label_score = Label::createWithSystemFont("score: 0", "Arial", SMALL_LABEL_FONT_SIZE);
-	label_score->setAnchorPoint(Vec2(0.5, 0));
-	label_score->setPosition(this->getContentSize().width / 2, 0);
-	label_score->setName("score");
-	this->addChild(label_score);
 
-	auto label_goal = Label::createWithSystemFont(get_UTF8_string("goal"), "Arial", MID_LABEL_FONT_SIZE);
+	x = origin.x + 20;
+	y = origin.y + visible_size.height;
+	auto label_goal = Label::createWithSystemFont(get_UTF8_string("goal"), "abc", MID_LABEL_FONT_SIZE);
 	label_goal->setAnchorPoint(Vec2(0, 1));
-	label_goal->setPosition(origin + Vec2(0, visible_size.height));
+	label_goal->setPosition(0, y);
 	this->addChild(label_goal);
+	y -= label_goal->getContentSize().height + 10;
+	if (kill > 0) {
+		auto sprite = Sprite::create("snake.png");
+		sprite->setAnchorPoint(Vec2(0, 1));
+		sprite->setPosition(x, y);
+		auto label = Label::createWithSystemFont(" x" + Value(kill).asString(), "abc", SMALL_LABEL_FONT_SIZE);
+		label->setAnchorPoint(Vec2(0, 1));
+		label->setPosition(x + sprite->getContentSize().width, y);
+		label->setName("label_kill");
+		y -= max(sprite->getContentSize().height, label->getContentSize().height) + 5;
+		this->addChild(sprite);
+		this->addChild(label);
+	}
+	if (bug > 0) {
+		auto sprite = Sprite::create("bug.png");
+		sprite->setAnchorPoint(Vec2(0, 1));
+		sprite->setPosition(x, y);
+		auto label = Label::createWithSystemFont(" x" + Value(bug).asString(), "abc", SMALL_LABEL_FONT_SIZE);
+		label->setAnchorPoint(Vec2(0, 1));
+		label->setPosition(x + sprite->getContentSize().width, y);
+		label->setName("label_bug");
+		y -= max(sprite->getContentSize().height, label->getContentSize().height) + 5;
+		this->addChild(sprite);
+		this->addChild(label);
+	}
+	if (flower > 0) {
+		auto sprite = Sprite::create("flower.png");
+		sprite->setAnchorPoint(Vec2(0, 1));
+		sprite->setPosition(x, y);
+		auto label = Label::createWithSystemFont(" x" + Value(flower).asString(), "abc", SMALL_LABEL_FONT_SIZE);
+		label->setAnchorPoint(Vec2(0, 1));
+		label->setPosition(x + sprite->getContentSize().width, y);
+		label->setName("label_flower");
+		y -= max(sprite->getContentSize().height, label->getContentSize().height) + 5;
+		this->addChild(sprite);
+		this->addChild(label);
+	}
+	auto label_score = Label::createWithSystemFont(get_UTF8_string("score") + " 0", "abc", SMALL_LABEL_FONT_SIZE);
+	label_score->setAnchorPoint(Vec2(0, 1));
+	label_score->setPosition(0, y);
+	label_score->setName("label_score");
+	this->addChild(label_score);
 
 	scheduleUpdate();
 
@@ -217,17 +287,24 @@ bool MyGame::init(int mission_id) {
 
 void MyGame::update(float dt) {
 	auto fps = Director::getInstance()->getAnimationInterval();
-	auto food_layer = game_map->getLayer("food");
-	CCASSERT(food_layer, "food_layer has not defined!");
 	for (int i = 0; i < foods_num; i++) {
-		if (cooldown[i] > 0) {
-			current_cooldown[i] -= fps;
-			if (current_cooldown[i] < 0) {
-				current_cooldown[i] = cooldown[i];
+		if (remain_num[i] > 0) {
+			current_cooldown[i] += fps;
+			if (current_cooldown[i] > cooldown[i]) {
+				current_cooldown[i] -= cooldown[i];
+				remain_num[i]--;
 				auto pos = game_map->get_random_empty_point();
 				if (pos.first >= 0) {
 					food_layer->setTileGID(i + 1, Vec2(pos.first, pos.second));
 				}
+			}
+			float width = current_cooldown[i] / cooldown[i] * progress_length;
+			if (width < 0.5 || remain_num[i] == 0) {
+				progress[i]->setVisible(false);
+			}
+			else {
+				progress[i]->setVisible(true);
+				progress[i]->setScaleX(width / progress[i]->getContentSize().width);
 			}
 		}
 	}
@@ -239,18 +316,16 @@ void MyGame::update(float dt) {
 			snake->check();
 		}
 	}
-	auto label = (Label*)this->getChildByName("score");
-	label->setString("score: " + Value(get_score()).asString());
 }
 
 void MyGame::game_over() {
 	string id_string = Value(this->getTag()).asString();
-	if (get_score() >= min_score && bug == 0 && flower == 0) {
+	if (get_score() >= min_score && bug <= 0 && flower <= 0 && kill <= 0) {
 		user_info["mission_score" + id_string] = max(get_score(), user_info["mission_score" + id_string].asInt());
 		user_info["mission_success" + id_string] = user_info["mission_success" + id_string].asInt() + 1;
 	}
 	user_info["mission_challenge" + id_string] = user_info["mission_challenge" + id_string].asInt() + 1;
-	FileUtils::getInstance()->writeValueMapToFile(user_info, "user_info.xml");
+	FileUtils::getInstance()->writeValueMapToFile(user_info, "res/user_info.xml");
 	auto next_scene = GameMenu::createScene();
 	auto Transition_scene = TransitionCrossFade::create(SCENE_TURN_TRANSITION_TIME, next_scene);
 	Director::getInstance()->replaceScene(Transition_scene);
