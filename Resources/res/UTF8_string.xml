@@ -18,6 +18,10 @@
     <string>退出</string>
     <key>back</key>
     <string>返回</string>
+    <key>pause</key>
+    <string>暂停</string>
+    <key>go on</key>
+    <string>继续</string>
     <key>music</key>
     <string>音乐:</string>
     <key>soundEffects</key>

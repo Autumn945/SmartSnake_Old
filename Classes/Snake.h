@@ -13,10 +13,11 @@ public:
 		, t_follow
 		, t_enemy
 	};
+	static const int step_length = 500;
 	DEFINE_VAR_GET_SET(GameMap*, game_map);
 	DEFINE_VAR_GET_SET(queue<Sprite*>*, snake_nodes);
-	DEFINE_VAR_GET(queue<DIRECTION>*, turn_list);
-	DEFINE_VAR_GET(DIRECTION, current_dir);
+	int turn_1, turn_2;
+	DEFINE_VAR_GET(int, current_dir);
 	DEFINE_VAR_GET(pii, position);
 	DEFINE_VAR_GET(string, image);
 	DEFINE_VAR_GET(bool, is_died);

@@ -33,7 +33,7 @@ public:
 	virtual bool init(int mission_id);
 	virtual void update(float dt);
 	void game_over();
-
+	bool isUpdate;
 	int min_score, bug, flower, kill;
 	GameMap* game_map;
 	vector<Snake*> snakes;

@@ -59,7 +59,7 @@ bool Snake::init(string name, GameMap* game_map) {
 	this->setName(name);
 	is_died = false;
 	snake_nodes = new queue<Sprite*>();
-	turn_list = new queue<DIRECTION>();
+	turn_1 = turn_2 = -1;
 	length = 2;
 	hunger = 0;
 	step = 0;
@@ -72,19 +72,18 @@ bool Snake::init(string name, GameMap* game_map) {
 }
 
 Snake::~Snake() {
-	delete turn_list;
 	delete snake_nodes;
 	log("deleted a snake");
 }
 
 void Snake::go_step() {
-	const int step_length = 500;
-	/*if (speed < 1) {
+	//const int step_length = 500;
+	if (speed < 1) {
 		speed = 1;
 	}
 	else if (speed > step_length / 2) {
 		speed = step_length / 2;
-	}*/
+	}
 	step += speed;
 	if (step >= step_length) {
 		step -= step_length;
@@ -142,10 +141,11 @@ bool Snake::new_tail() {
 
 bool Snake::new_head() {
 	if (!snake_nodes->empty()) {
-		auto next_dir = current_dir;
-		if (!turn_list->empty()) {
-			next_dir = turn_list->front();
-			turn_list->pop();
+		int next_dir = current_dir;
+		if (turn_1 >= 0) {
+			next_dir = turn_1;
+			turn_1 = turn_2;
+			turn_2 = -1;
 		}
 		Rect rect = TAIL;
 		bool flipped_x = false;
@@ -167,7 +167,7 @@ bool Snake::new_head() {
 		snake_nodes->back()->setSpriteFrame(SpriteFrame::create(this->image, rect));
 		snake_nodes->back()->setFlippedX(flipped_x);
 		snake_nodes->back()->setRotation(90 * current_dir);
-		position = game_map->get_next_position(position, current_dir);
+		position = game_map->get_next_position(position, (DIRECTION)current_dir);
 	}
 	auto head = Sprite::create(this->image, HEAD);
 	//log("create %d -> (%d, %d)", head, position.first, position.second);
@@ -220,6 +220,10 @@ bool Snake::check() {
 		}
 		else {
 			log("%s p %s", this->getName().c_str(), snk->getName().c_str());
+			if (sp == ((Snake*)sp->getParent())->get_snake_nodes()->back()) {
+				log("%s p %s", snk->getName().c_str(), this->getName().c_str());
+				((Snake*)sp->getParent())->go_die();
+			}
 		}
 		this->go_die();
 		return true;
@@ -324,15 +328,20 @@ bool Snake::eat(int gid) {
 }
 
 bool Snake::turn(DIRECTION dir) {
-	if (turn_list->size() >= 2) {
+	if (turn_2 >= 0) {
 		return false;
 	}
-	auto last_turn = current_dir;
-	if (!turn_list->empty()) {
-		last_turn = turn_list->back();
+	int last_turn = current_dir;
+	if (turn_1 >= 0) {
+		last_turn = turn_1;
 	}
 	if (abs(dir - last_turn) == 1 || abs(dir - last_turn) == 3) {
-		turn_list->push(dir);
+		if (turn_1 >= 0) {
+			turn_2 = dir;
+		}
+		else {
+			turn_1 = dir;
+		}
 		return true;
 	}
 	return false;

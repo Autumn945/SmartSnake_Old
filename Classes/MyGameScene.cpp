@@ -57,41 +57,6 @@ bool MyGame::init(int mission_id) {
 	bug = bug_v.asInt();
 	flower = flower_v.asInt();
 	kill = kill_v.asInt();
-	float x = origin.x + visible_size.width - 8 * UNIT + 10, y = origin.y + visible_size.height - 10;
-	for (int i = 0; i < foods_num; i++) {
-		int gid = i + 1;
-		auto v = game_map->getPropertiesForGID(gid).asValueMap();
-		if (v.count("max_num") == 0) {
-			v["max_num"] = 0;
-		}
-		remain_num[i] = v["max_num"].asInt();
-		if (v.count("cooldown") == 0) {
-			v["cooldown"] = 0;
-		}
-		cooldown[i] = max(v["cooldown"].asFloat(), 1.0f);
-		current_cooldown[i] = 0;
-		auto sp = Sprite::create("progress.png");
-		progress_length = sp->getContentSize().width;
-		if (remain_num[i] >= 0) {
-			auto sprite = Sprite::create("foods.png", Rect(i % 4 * UNIT, i / 4 * UNIT, UNIT, UNIT));
-			sprite->setAnchorPoint(Vec2(0, 1));
-			sprite->setPosition(x, y);
-			y -= UNIT + 5;
-			this->addChild(sprite);
-			sprite = Sprite::create("progress.png");
-			sprite->setAnchorPoint(Vec2(0, 1));
-			sprite->setPosition(x, y);
-			//y -= sprite->getContentSize().height + 5;
-			this->addChild(sprite);
-			sprite = Sprite::create("progress_f.png");
-			sprite->setAnchorPoint(Vec2(0, 1));
-			sprite->setPosition(x, y);
-			y -= sprite->getContentSize().height + 10;
-			sprite->setVisible(false);
-			progress[i] = sprite;
-			this->addChild(sprite);
-		}
-	}
 	auto snake_obj_group = game_map->getObjectGroup("snake_objs");
 	CCASSERT(snake_obj_group, "snake_objs has not defined!");
 	food_layer = game_map->getLayer("food");
@@ -120,9 +85,7 @@ bool MyGame::init(int mission_id) {
 			}
 		}
 	}
-
-	x = origin.x + 20;
-	y = origin.y + visible_size.height;
+	float x = origin.x + 20, y = origin.y + visible_size.height;
 	auto label_goal = Label::createWithSystemFont(get_UTF8_string("goal"), "abc", MID_LABEL_FONT_SIZE);
 	label_goal->setAnchorPoint(Vec2(0, 1));
 	label_goal->setPosition(0, y);
@@ -170,7 +133,80 @@ bool MyGame::init(int mission_id) {
 	label_score->setName("label_score");
 	this->addChild(label_score);
 
+	x = origin.x + visible_size.width - 8 * UNIT + 10; 
+	y = origin.y + visible_size.height - 10;
+	for (int i = 0; i < foods_num; i++) {
+		int gid = i + 1;
+		auto v = game_map->getPropertiesForGID(gid).asValueMap();
+		if (v.count("max_num") == 0) {
+			v["max_num"] = 0;
+		}
+		remain_num[i] = v["max_num"].asInt();
+		if (v.count("cooldown") == 0) {
+			v["cooldown"] = 0;
+		}
+		cooldown[i] = max(v["cooldown"].asFloat(), 0.1f);
+		current_cooldown[i] = 0;
+		auto sp = Sprite::create("progress.png");
+		progress_length = sp->getContentSize().width;
+		if (remain_num[i] >= 0) {
+			auto sprite = Sprite::create("foods.png", Rect(i % 4 * UNIT, i / 4 * UNIT, UNIT, UNIT));
+			sprite->setAnchorPoint(Vec2(0, 1));
+			sprite->setPosition(x, y);
+			y -= UNIT + 5;
+			this->addChild(sprite);
+			sprite = Sprite::create("progress.png");
+			sprite->setAnchorPoint(Vec2(0, 1));
+			sprite->setPosition(x, y);
+			//y -= sprite->getContentSize().height + 5;
+			this->addChild(sprite);
+			sprite = Sprite::create("progress_f.png");
+			sprite->setAnchorPoint(Vec2(0, 1));
+			sprite->setPosition(x, y);
+			y -= sprite->getContentSize().height + 10;
+			sprite->setVisible(false);
+			progress[i] = sprite;
+			this->addChild(sprite);
+		}
+	}
+	y = origin.y;
+	auto menu_back = MenuItemFont::create(get_UTF8_string("back"), [this](Ref *sender) {
+		auto next_scene = GameMenu::createScene();
+		auto Transition_scene = TransitionCrossFade::create(SCENE_TURN_TRANSITION_TIME, next_scene);
+		Director::getInstance()->replaceScene(Transition_scene);
+	});
+	menu_back->setAnchorPoint(Vec2(1, 0));
+	menu_back->setPosition(origin.x + visible_size.width, y);
+	menu_back->setVisible(false);
+	y += menu_back->getContentSize().height + 10;
+	auto fond_size = MenuItemFont::getFontSize();
+	MenuItemFont::setFontSize(BIG_LABEL_FONT_SIZE + 10);
+	auto menu_pause = MenuItemToggle::createWithCallback([this, menu_back](Ref *ref) {
+		if (isUpdate) {
+			this->unscheduleUpdate();
+			isUpdate = false;
+			menu_back->setVisible(true);
+		}
+		else {
+			this->scheduleUpdate();
+			isUpdate = true;
+			menu_back->setVisible(false);
+		}
+	},
+		MenuItemFont::create(get_UTF8_string("pause")),
+		MenuItemFont::create(get_UTF8_string("go on")),
+		NULL
+		);
+	MenuItemFont::setFontSize(fond_size);
+	menu_pause->setAnchorPoint(Vec2(0, 0));
+	menu_pause->setPosition(x, y);
+	auto menu = Menu::create(menu_back, menu_pause, NULL);
+	menu->setAnchorPoint(Vec2::ZERO);
+	menu->setPosition(Vec2::ZERO);
+	this->addChild(menu);
+
 	scheduleUpdate();
+	isUpdate = true;
 
 	auto layer = LayerColor::create(Color4B::GRAY, game_map->getContentSize().width, game_map->getContentSize().height);
 	if (layer->isIgnoreAnchorPointForPosition()) {
@@ -179,17 +215,6 @@ bool MyGame::init(int mission_id) {
 	layer->setAnchorPoint(game_map->getAnchorPoint());
 	layer->setPosition(game_map->getPosition());
 	this->addChild(layer, -1);
-
-	auto menu_back = MenuItemFont::create(get_UTF8_string("back"), [this](Ref *sender) {
-		auto next_scene = GameMenu::createScene();
-		auto Transition_scene = TransitionCrossFade::create(SCENE_TURN_TRANSITION_TIME, next_scene);
-		Director::getInstance()->replaceScene(Transition_scene);
-	});
-	menu_back->setAnchorPoint(Vec2::ZERO);
-	auto menu = Menu::create(menu_back, NULL);
-	menu->setAnchorPoint(Vec2::ZERO);
-	menu->setPosition(Vec2::ZERO);
-	this->addChild(menu);
 
 	//add listener
 	auto listener_touch = EventListenerTouchOneByOne::create();

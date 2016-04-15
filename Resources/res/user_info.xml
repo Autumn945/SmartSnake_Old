@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"/>
+
+<plist version="1.0">
+    <dict>
+        <key>mission_score1</key>
+        <integer>0</integer>
+        <key>mission_challenge2</key>
+        <integer>0</integer>
+        <key>mission_success1</key>
+        <integer>0</integer>
+        <key>mission_challenge1</key>
+        <integer>1</integer>
+        <key>mission_score2</key>
+        <integer>0</integer>
+        <key>mission_success2</key>
+        <integer>0</integer>
+        <key>mission_score3</key>
+        <integer>0</integer>
+        <key>mission_success3</key>
+        <integer>0</integer>
+        <key>mission_challenge3</key>
+        <integer>0</integer>
+        <key>mission_score4</key>
+        <integer>0</integer>
+        <key>mission_success4</key>
+        <integer>0</integer>
+        <key>mission_challenge4</key>
+        <integer>1</integer>
+        <key>mission_score5</key>
+        <integer>0</integer>
+        <key>mission_success5</key>
+        <integer>0</integer>
+        <key>mission_challenge5</key>
+        <integer>9</integer>
+        <key>control_mode</key>
+    </dict>
+</plist>
