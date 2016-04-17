@@ -49,6 +49,17 @@ bool GameMap::initWithTMXFile(string file_name) {
 	else {
 		this->getLayer("grass")->setLocalZOrder(1);
 	}
+	auto wall = this->getLayer("wall");
+	empty_n = this->getMapSize().width * this->getMapSize().height;
+	if (wall) {
+		for (int i = 0; i < this->getMapSize().width; i++) {
+			for (int j = 0; j < this->getMapSize().height; j++) {
+				if (wall->getTileGIDAt(Vec2(i, j)) > 0) {
+					empty_n--;
+				}
+			}
+		}
+	}
 	return true;
 }
 
@@ -137,8 +148,12 @@ bool GameMap::is_empty(pii pos, int delay) {
 	auto sp = snake_map[pos.first][pos.second];
 	if (sp) {
 		auto snake = (Snake*)sp->getParent();
-		auto time_snake = ((sp->getTag() - snake->get_tail_time_stamp() + 1) * Snake::step_length - snake->get_step() - 1)
-			/ snake->get_speed() + 1;
+		int length = sp->getTag() - snake->get_tail_time_stamp() + 1;
+		int steps = length * Snake::step_length - snake->get_step();
+		auto time_snake = (steps - 1) / snake->get_speed() + 1;
+		if (steps <= 0) {
+			time_snake = 0;
+		}
 		if (time_snake > delay) {
 			return false;
 		}
@@ -166,63 +181,68 @@ vector<pii> GameMap::get_foods() {
 	return ret;
 }
 
-pii GameMap::get_accessible_last_snake_node(pii position, int dir, Snake* snake, int &lenght_step_min) {
-	pii ret = position;
+int GameMap::get_accessible_last_snake_node_dir(pii position, int dir, Snake* snake, int &lenght_step_min) {
+	pii target = position;
+	int ret = -1;
 	lenght_step_min = 0x3fffff;
-	bool vis[max_game_width][max_game_height] = { false };
+	// otherwhere if (i, j) has not visited, vis[i][j] = 0, otherwise direction is vis[i][j] - 1;
+	int vis[max_game_width][max_game_height] = { 0 };
+	pii pre_position[max_game_width][max_game_height];
 	auto wall = this->getLayer("wall");
 	auto snake_map = this->get_snake_map();
-	struct SnakeNodeData {
-		pii position;
-		int step;
-		int dir;
-		SnakeNodeData(pii _position, int _step, int _dir) : position(_position), step(_step), dir(_dir) {};
-	};
-	stack<SnakeNodeData > q;
-	q.push(SnakeNodeData(position, 0, dir));
+	stack<pair<pii, int> > q;
+	q.push(make_pair(position, 0));
+	vis[position.first][position.second] = dir + 1;
 	while (!q.empty()) {
-		auto now = q.top().position;
-		auto step = q.top().step + 1;
-		dir = q.top().dir;
+		auto now = q.top().first;
+		auto step = q.top().second + 1;
+		auto pre_dir = vis[now.first][now.second] - 1;
 		q.pop();
-		for (int i = 0; i < 4; i++) {
-			if (abs(dir - i) == 2) {
+		for (int i = 3; i >= 0; i--) {
+			if (abs(pre_dir - i) == 2) {
 				continue;
 			}
 			auto nxt = this->get_next_position(now, (DIRECTION)i);
-			if (vis[nxt.first][nxt.second]) {
+			if (vis[nxt.first][nxt.second] > 0) {
 				continue;
 			}
-			vis[nxt.first][nxt.second] = true;
-			if (wall != NULL && wall->getTileGIDAt(Vec2(nxt.first, nxt.second)) > 0) {
-				continue;
+			pre_position[nxt.first][nxt.second] = now;
+			vis[nxt.first][nxt.second] = i + 1;
+			auto steps = step * Snake::step_length - snake->get_step();
+			auto time_snake = (steps - 1) / snake->get_step() + 1;
+			if (steps <= 0) {
+				time_snake = 0;
 			}
 			auto sp = snake_map[nxt.first][nxt.second];
-			if (sp) {
-				if (sp->getParent() != snake) {
-					auto snk = (Snake*)sp->getParent();
-					auto time_snk = ((sp->getTag() - snk->get_tail_time_stamp() + 1) * Snake::step_length - snk->get_step() - 1)
-						/ snk->get_speed() + 1;
-					auto time_snake = (step * Snake::step_length - snake->get_step() - 1)
-						/ snake->get_speed() + 1;
-					if (time_snake >= time_snk) {
-						q.push(SnakeNodeData(nxt, step, i));
+			if (!is_empty(nxt, time_snake)) {
+				if (sp && sp->getParent() == snake) {
+					int lenght_step = sp->getTag() - snake->get_tail_time_stamp() - step;
+					if (lenght_step < lenght_step_min) {
+						lenght_step_min = lenght_step;
+						target = nxt;
 					}
-					continue;
 				}
+				continue;
+			}
+			if (sp && sp->getParent() == snake) {
 				int lenght_step = sp->getTag() - snake->get_tail_time_stamp() - step;
 				if (lenght_step < lenght_step_min) {
 					lenght_step_min = lenght_step;
-					ret = nxt;
+					target = nxt;
 				}
+				log("getting tail is ok, ret = (%d, %d), lenght_step_min = %d, step = %d", target.first, target.second, lenght_step_min, step);
+				//return ret;
+				//break;
 			}
-			else {
-				q.push(SnakeNodeData(nxt, step, i));
-			}
+			q.push(make_pair(nxt, step));
 		}
 	}
 	if (lenght_step_min >= 0) {
-		log("ret = (%d, %d), lenght_step_min = %d", ret.first, ret.second, lenght_step_min);
+		log("ret = (%d, %d), lenght_step_min = %d", target.first, target.second, lenght_step_min);
+	}
+	while (target != position) {
+		ret = vis[target.first][target.second] - 1;
+		target = pre_position[target.first][target.second];
 	}
 	return ret;
 }
@@ -234,12 +254,13 @@ int GameMap::get_target_shortest_path_dir(pii position, int current_dir, pii tar
 	// otherwhere if (i, j) has not visited, vis[i][j] = 0, otherwise direction is vis[i][j] - 1;
 	int vis[max_game_width][max_game_height] = { 0 };
 	pii pre_position[max_game_width][max_game_height];
-	queue<pii> q;
-	q.push(position);
+	queue<pair<pii, int> > q;
+	q.push(make_pair(position, 0));
 	vis[position.first][position.second] = current_dir + 1;
 	bool is_get_target = false;
 	while (!q.empty() && !is_get_target) {
-		auto now = q.front();
+		auto now = q.front().first;
+		auto step = q.front().second + 1;
 		q.pop();
 		for (int i = 0; i < 4; i++) {
 			int pre_dir = vis[now.first][now.second] - 1;
@@ -256,12 +277,15 @@ int GameMap::get_target_shortest_path_dir(pii position, int current_dir, pii tar
 				is_get_target = true;
 				break;
 			}
-			if (!this->is_empty(nxt
-				, ((abs(nxt.first - position.first) + abs(nxt.second - position.second)) * Snake::step_length - 1)
-				/ snake->get_speed() + 1)) {
+			int steps = step * Snake::step_length - snake->get_step();
+			int time_s = (steps - 1) / snake->get_speed() + 1;
+			if (steps <= 0) {
+				time_s = 0;
+			}
+			if (!this->is_empty(nxt, time_s)) {
 				continue;
 			}
-			q.push(nxt);
+			q.push(make_pair(nxt, step));
 		}
 	}
 	if (is_get_target) {
@@ -292,7 +316,8 @@ int GameMap::get_target_shortest_path_dir(pii position, int current_dir, pii tar
 			}
 		}
 		int length_step_min;
-		auto tmp = get_accessible_last_snake_node(target, vis[target.first][target.second] - 1, snake, length_step_min);
+		int dis_from_me[max_game_width][max_game_height]{ 0 };
+		auto tmp = get_accessible_last_snake_node_dir(target, vis[target.first][target.second] - 1, snake, length_step_min);
 		if (length_step_min >= vs - 1) {
 			ret = -1;
 		}
@@ -319,7 +344,16 @@ int GameMap::get_target_longest_path_dir(pii position, int current_dir, pii targ
 		q.pop();
 		for (int i = 0; i < 4; i++) {
 			auto nxt = get_next_position(now, (DIRECTION)i);
-			if (!is_empty(nxt) || dis_map[nxt.first][nxt.second] > 0) {
+			if (get_snake_map()[nxt.first][nxt.second] && get_snake_map()[target.first][target.second]
+				&& get_snake_map()[nxt.first][nxt.second]->getTag() > get_snake_map()[target.first][target.second]->getTag()) {
+				continue;
+			}
+			int steps = abs(nxt.first - position.first) + abs(nxt.second - position.second) * Snake::step_length - snake->get_step();
+			int time_s = (steps - 1) / snake->get_speed() + 1;
+			if (steps <= 0) {
+				time_s = 0;
+			}
+			if (!is_empty(nxt, time_s) || dis_map[nxt.first][nxt.second] > 0) {
 				continue;
 			}
 			dis_map[nxt.first][nxt.second] = dis_map[now.first][now.second] + 1;
@@ -331,8 +365,8 @@ int GameMap::get_target_longest_path_dir(pii position, int current_dir, pii targ
 			continue;
 		}
 		auto nxt = this->get_next_position(position, (DIRECTION)i);
-		if (this->is_empty(nxt, (Snake::step_length - 1) / snake->get_speed() + 1)
-			&& get_target_shortest_path_dir(nxt, i, target, snake) >= 0) {
+		if (this->is_empty(nxt)
+			&& dis_map[nxt.first][nxt.second] > 0) {
 			int tmp = dis_map[nxt.first][nxt.second];
 			if (tmp > dis) {
 				dis = tmp;

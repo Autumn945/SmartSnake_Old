@@ -36,6 +36,8 @@ bool MyGame::init(int mission_id) {
 	auto mission = Mission::create(mission_id);
 	min_score = mission->flower[0];
 	score = 0;
+	heart = 3;
+	pause_n = 3;
 	this->setTag(mission_id);
 	game_map = mission->get_game_map();
 	game_map->setTag(mission_id);
@@ -179,28 +181,69 @@ bool MyGame::init(int mission_id) {
 	menu_back->setPosition(origin.x + visible_size.width, y);
 	menu_back->setVisible(false);
 	y += menu_back->getContentSize().height + 10;
-	auto fond_size = MenuItemFont::getFontSize();
+	auto menu_again = MenuItemFont::create(get_UTF8_string("again"), [this](Ref *sender) {
+		string id_string = Value(this->getTag()).asString();
+		user_info["mission_challenge" + id_string] = user_info["mission_challenge" + id_string].asInt() + 1;
+		FileUtils::getInstance()->writeValueMapToFile(user_info, "res/user_info.xml");
+		auto next_scene = MyGame::createScene(this->getTag());
+		auto Transition_scene = TransitionCrossFade::create(SCENE_TURN_TRANSITION_TIME, next_scene);
+		Director::getInstance()->replaceScene(Transition_scene);
+	});
+	menu_again->setAnchorPoint(Vec2(0, 0));
+	menu_again->setPosition(x, origin.y);
+	menu_again->setVisible(false);
+	auto font_size = MenuItemFont::getFontSize();
 	MenuItemFont::setFontSize(BIG_LABEL_FONT_SIZE + 10);
-	auto menu_pause = MenuItemToggle::createWithCallback([this, menu_back](Ref *ref) {
+	auto menu_pause = MenuItemToggle::createWithCallback([this, menu_back, menu_again](Ref *ref) {
 		if (isUpdate) {
+			if (pause_n <= 0) {
+				game_map->setVisible(false);
+			}
+			else {
+				add_pause_n(-1);
+				auto label = (Label*)this->getChildByName("label_pause");
+				label->setString(" x" + Value(this->get_pause_n()).asString());
+			}
 			this->unscheduleUpdate();
 			isUpdate = false;
 			menu_back->setVisible(true);
+			menu_again->setVisible(true);
 		}
 		else {
+			game_map->setVisible(true);
 			this->scheduleUpdate();
 			isUpdate = true;
 			menu_back->setVisible(false);
+			menu_again->setVisible(false);
 		}
 	},
 		MenuItemFont::create(get_UTF8_string("pause")),
 		MenuItemFont::create(get_UTF8_string("go on")),
 		NULL
 		);
-	MenuItemFont::setFontSize(fond_size);
+	MenuItemFont::setFontSize(font_size);
 	menu_pause->setAnchorPoint(Vec2(0, 0));
 	menu_pause->setPosition(x, y);
-	auto menu = Menu::create(menu_back, menu_pause, NULL);
+	auto label_pause = Label::createWithSystemFont(" x" + Value(pause_n).asString(), "abc", SMALL_LABEL_FONT_SIZE);
+	label_pause->setName("label_pause");
+	label_pause->setAnchorPoint(Vec2(0, 0));
+	label_pause->setPosition(menu_pause->getPosition() + Vec2(menu_pause->getContentSize().width, 0));
+	this->addChild(label_pause);
+	turn_1 = Sprite::create("arrow.png");
+	turn_2 = Sprite::create("arrow.png");
+	turn_1->setPosition(menu_pause->getPosition() + Vec2(0, menu_pause->getContentSize().height + 10) + turn_1->getContentSize() / 2);
+	turn_2->setPosition(turn_1->getPosition() + Vec2(turn_1->getContentSize().width + 10, 0));
+	this->addChild(turn_1);
+	this->addChild(turn_2);
+	menu_clear_dir = MenuItemFont::create(" X ", [this](Ref *sender) {
+		snakes[0]->turn_1 = -1;
+		snakes[0]->turn_2 = -1;
+		update_dir();
+	});
+	//menu_clear_dir->setAnchorPoint(Vec2(0, 0));
+	menu_clear_dir->setPosition(turn_2->getPosition() + Vec2(turn_2->getContentSize().width + 10, 0));
+	update_dir();
+	auto menu = Menu::create(menu_back, menu_pause, menu_again, menu_clear_dir, NULL);
 	menu->setAnchorPoint(Vec2::ZERO);
 	menu->setPosition(Vec2::ZERO);
 	this->addChild(menu);
@@ -250,6 +293,7 @@ bool MyGame::init(int mission_id) {
 							snake->turn(dir);
 						}
 					}
+					update_dir();
 				}
 			}
 		}
@@ -272,6 +316,7 @@ bool MyGame::init(int mission_id) {
 						snake->turn(dir);
 					}
 				}
+				update_dir();
 				*touch_begin = pos;
 			}
 		}
@@ -303,7 +348,13 @@ bool MyGame::init(int mission_id) {
 		default:
 			return;
 		}
-		snakes[0]->turn(dir);
+		for (auto snake : snakes) {
+			auto snake_type = snake->get_type();
+			if (snake_type == Snake::SnakeType::t_player || snake_type == Snake::SnakeType::t_follow) {
+				snake->turn(dir);
+			}
+		}
+		update_dir();
 	};
 	Director::getInstance()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(listener_touch, this);
 	Director::getInstance()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(listener_key, this);
@@ -311,6 +362,16 @@ bool MyGame::init(int mission_id) {
 }
 
 void MyGame::update(float dt) {
+	int dir = snakes[0]->get_current_dir();
+	if (snakes[0]->turn_1 >= 0) {
+		dir = snakes[0]->turn_1;
+	}
+	if (Snake::step_length - snakes[0]->get_step() <= 0
+		&& !game_map->is_empty(game_map->get_next_position(snakes[0]->get_position(), dir))) {
+		snakes[0]->turn_1 = snakes[0]->turn_2 = -1;
+		update_dir();
+		return;
+	}
 	auto fps = Director::getInstance()->getAnimationInterval();
 	for (int i = 0; i < foods_num; i++) {
 		if (remain_num[i] > 0) {
@@ -340,6 +401,26 @@ void MyGame::update(float dt) {
 		if (!snake->get_is_checked()) {
 			snake->check();
 		}
+	}
+}
+
+void MyGame::update_dir() {
+	if (snakes[0]->turn_1 >= 0) {
+		turn_1->setVisible(true);
+		turn_1->setRotation(90 * snakes[0]->turn_1);
+		if (snakes[0]->turn_2 >= 0) {
+			turn_2->setVisible(true);
+			turn_2->setRotation(90 * snakes[0]->turn_2);
+		}
+		else {
+			turn_2->setVisible(false);
+		}
+		menu_clear_dir->setVisible(true);
+	}
+	else {
+		turn_1->setVisible(false);
+		turn_2->setVisible(false);
+		menu_clear_dir->setVisible(false);
 	}
 }
 

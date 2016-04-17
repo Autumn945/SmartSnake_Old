@@ -22,6 +22,8 @@
     <string>暂停</string>
     <key>go on</key>
     <string>继续</string>
+    <key>again</key>
+    <string>重来</string>
     <key>music</key>
     <string>音乐:</string>
     <key>soundEffects</key>

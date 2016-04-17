@@ -93,11 +93,11 @@
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="17"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
    <tile gid="17"/>
    <tile gid="17"/>
    <tile gid="17"/>
@@ -113,16 +113,16 @@
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="17"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
    <tile gid="17"/>
    <tile gid="17"/>
    <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="0"/>
@@ -133,22 +133,16 @@
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="17"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
    <tile gid="17"/>
-   <tile gid="0"/>
    <tile gid="17"/>
    <tile gid="17"/>
    <tile gid="17"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="0"/>
@@ -159,18 +153,16 @@
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="17"/>
-   <tile gid="0"/>
    <tile gid="17"/>
    <tile gid="17"/>
    <tile gid="17"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="0"/>
@@ -180,9 +172,17 @@
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="0"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
    <tile gid="17"/>
    <tile gid="17"/>
    <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="0"/>
@@ -193,16 +193,16 @@
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="17"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
    <tile gid="17"/>
    <tile gid="17"/>
    <tile gid="17"/>
    <tile gid="17"/>
-   <tile gid="0"/>
+   <tile gid="17"/>
    <tile gid="17"/>
    <tile gid="17"/>
    <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="0"/>
@@ -213,17 +213,11 @@
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="17"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
    <tile gid="17"/>
    <tile gid="17"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
    <tile gid="17"/>
    <tile gid="17"/>
    <tile gid="17"/>
-   <tile gid="0"/>
    <tile gid="17"/>
    <tile gid="17"/>
    <tile gid="17"/>
@@ -231,60 +225,25 @@
    <tile gid="17"/>
    <tile gid="17"/>
    <tile gid="17"/>
-   <tile gid="0"/>
    <tile gid="17"/>
    <tile gid="17"/>
    <tile gid="17"/>
    <tile gid="17"/>
    <tile gid="17"/>
-   <tile gid="0"/>
    <tile gid="17"/>
    <tile gid="17"/>
    <tile gid="17"/>
    <tile gid="17"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
    <tile gid="17"/>
-   <tile gid="0"/>
    <tile gid="17"/>
    <tile gid="17"/>
    <tile gid="17"/>
    <tile gid="17"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
    <tile gid="17"/>
    <tile gid="17"/>
-   <tile gid="0"/>
    <tile gid="17"/>
    <tile gid="17"/>
    <tile gid="17"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
    <tile gid="17"/>
    <tile gid="17"/>
    <tile gid="17"/>
@@ -299,11 +258,50 @@
    <tile gid="17"/>
    <tile gid="17"/>
    <tile gid="17"/>
-   <tile gid="0"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
    <tile gid="17"/>
    <tile gid="17"/>
    <tile gid="17"/>
    <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
+   <tile gid="17"/>
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="0"/>
@@ -320,8 +318,10 @@
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="0"/>
-   <tile gid="17"/>
-   <tile gid="17"/>
+   <tile gid="0"/>
+   <tile gid="0"/>
+   <tile gid="0"/>
+   <tile gid="0"/>
    <tile gid="17"/>
    <tile gid="17"/>
    <tile gid="17"/>
@@ -913,16 +913,16 @@
   </data>
  </layer>
  <objectgroup name="snake_objs">
-  <object id="1" name="player" type="player" x="240" y="304">
+  <object id="1" name="player" type="player" x="272" y="400">
    <properties>
-    <property name="direction" value="1"/>
-    <property name="speed" value="30"/>
+    <property name="direction" value="3"/>
+    <property name="speed" value="200"/>
    </properties>
   </object>
   <object id="22" name="smartsnake" type="enemy" x="48" y="176">
    <properties>
     <property name="direction" value="3"/>
-    <property name="speed" value="20"/>
+    <property name="speed" value="200"/>
    </properties>
   </object>
  </objectgroup>

@@ -14,6 +14,7 @@ public:
 	}
 	pii to_tile_map_pos(Vec2 pos);
 	Vec2 to_cocos_pos(pii pos);
+	DEFINE_VAR_GET_ADD(int, empty_n);
 	~GameMap();
 	static GameMap* createWithTMXFile(string file_name);
 	virtual bool initWithTMXFile(string);
@@ -24,7 +25,7 @@ public:
 	bool is_empty(pii pos, int delay = 0);
 
 	vector<pii> get_foods();
-	pii get_accessible_last_snake_node(pii position, int dir, Snake* snake, int &);
+	int get_accessible_last_snake_node_dir(pii position, int dir, Snake* snake, int &);
 	int get_target_shortest_path_dir(pii position, int current_dir, pii target, Snake* snake, bool safe = false);
 	int get_target_longest_path_dir(pii position, int current_dir, pii target, Snake* snake);
 };

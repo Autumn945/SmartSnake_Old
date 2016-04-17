@@ -84,12 +84,12 @@ void Snake::go_step() {
 	else if (speed > step_length / 2) {
 		speed = step_length / 2;
 	}
-	step += speed;
 	if (step >= step_length) {
-		step -= step_length;
 		add_time_stamp(1);
 		this->go_ahead();
+		step -= step_length;
 	}
+	step += speed;
 }
 
 bool Snake::go_ahead() {
@@ -109,7 +109,8 @@ bool Snake::go_ahead() {
 	}
 	new_head();
 	is_checked = false;
-	hunger++;
+	hunger += 2;
+	((MyGame*)game_map->getParent())->update_dir();
 	return true;
 }
 
@@ -118,22 +119,18 @@ bool Snake::new_tail() {
 		return false;
 	}
 	auto tail = snake_nodes->front();
-	if (tail->getName() == "food") {
+	if (!is_died && tail->getName() == "food") {
 		tail->setName("tail");
 		tail->setColor(Color3B::WHITE);
 		length++;
+		game_map->add_empty_n(-1);
 		return false;
 	}
 	auto pos = game_map->to_tile_map_pos(tail->getPosition());
-	if (game_map->get_snake_map()[pos.first][pos.second] != tail) {
-		log("----------------------->  %d-> %d", clock(), game_map->get_snake_map()[pos.first][pos.second]);
-	}
-	auto test_t = game_map->get_snake_map()[pos.first][pos.second];
 	game_map->get_snake_map()[pos.first][pos.second] = NULL;
-	//log("empty %d(%d) -> (%d, %d)", tail, test_t, pos.first, pos.second);
 	this->removeChild(tail, true);
 	snake_nodes->pop();
-	if (!snake_nodes->empty()) {
+	if (!is_died && !snake_nodes->empty()) {
 		snake_nodes->front()->setSpriteFrame(SpriteFrame::create(this->image, TAIL));
 	}
 	return true;
@@ -248,9 +245,17 @@ void Snake::eat_reward(int gid) {
 	case MyGame::food_red_apple:
 		break;
 	case MyGame::food_bird:
+		hunger = 0;
 		break;
 	case MyGame::food_cola:
+	{
+		if (game->get_pause_n() < MyGame::max_pause_n) {
+			game->add_pause_n(1);
+		}
+		auto label = (Label*)game->getChildByName("label_pause");
+		label->setString(" x" + Value(game->get_pause_n()).asString());
 		break;
+	}
 	case MyGame::food_bug:
 	{
 		game->bug--;
@@ -280,8 +285,12 @@ void Snake::eat_reward(int gid) {
 	}
 	break;
 	case MyGame::food_heart:
+		if (game->get_heart() < MyGame::max_heart) {
+			game->add_heart(1);
+		}
 		break;
 	case MyGame::food_shit:
+		game->add_heart(-1);
 		break;
 	default:
 		break;

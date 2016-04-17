@@ -26,15 +26,21 @@ public:
 	};
 	int remain_num[foods_num];
 	float cooldown[foods_num], current_cooldown[foods_num];
+	static const int max_heart = 5, max_pause_n = 5;
 	DEFINE_VAR_GET_ADD(int, score);
+	DEFINE_VAR_GET_ADD(int, heart);
+	DEFINE_VAR_GET_ADD(int, pause_n);
 
 	static Scene* createScene(int mission_id);
 	static MyGame* create(int mission_id);
 	virtual bool init(int mission_id);
 	virtual void update(float dt);
+	void update_dir();
 	void game_over();
 	bool isUpdate;
 	int min_score, bug, flower, kill;
+	Sprite *turn_1, *turn_2;
+	MenuItemFont *menu_clear_dir;
 	GameMap* game_map;
 	vector<Snake*> snakes;
 };

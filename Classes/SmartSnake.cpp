@@ -30,7 +30,6 @@ void SmartSnake::eat_reward(int gid) {
 
 bool SmartSnake::go_die() {
 	is_died = true; 
-	return true;
 	auto game = (MyGame*)game_map->getParent();
 	game->kill--;
 	auto label = (Label*)game->getChildByName("label_kill");
@@ -48,8 +47,10 @@ bool SmartSnake::go_die() {
 			new_tail();
 		}, 1 / 30.0f, snake_nodes->size() - 1, 0, "go die");
 	}*/
+	return true;
+	game_map->add_empty_n(snake_nodes->size());
 	while (!snake_nodes->empty()) {
-	new_tail();
+		new_tail();
 	}
 	return true;
 }
@@ -87,6 +88,9 @@ bool SmartSnake::act() {
 		auto dir = game_map->get_target_shortest_path_dir(position, current_dir, target, this, safe);
 		if (dir >= 0) {
 			turn_1 = dir;
+			if (!game_map->is_empty(game_map->get_next_position(position, dir))) {
+				log("target = (%d, %d), dir = %d", target.first, target.second, dir);
+			}
 			//log("act 1, dir = %d, delay = %d", dir, clock() - begin_time);
 			return true;
 		}
@@ -96,6 +100,9 @@ bool SmartSnake::act() {
 		for (auto t : targets) {
 			auto dir = game_map->get_target_shortest_path_dir(position, current_dir, t, this, safe);
 			if (dir >= 0) {
+				if (!game_map->is_empty(game_map->get_next_position(position, dir))) {
+					log("target = (%d, %d), dir = %d", target.first, target.second, dir);
+				}
 				target = t;
 				turn_1 = dir;
 				//log("act 2, dir = %d, delay = %d", dir, clock() - begin_time);
@@ -104,8 +111,7 @@ bool SmartSnake::act() {
 		}
 	}
 	int lenght_step_min;
-	auto t = game_map->get_accessible_last_snake_node(position, current_dir, this, lenght_step_min);
-	auto dir = game_map->get_target_longest_path_dir(position, current_dir, t, this);
+	auto dir = game_map->get_accessible_last_snake_node_dir(position, current_dir, this, lenght_step_min);
 	if (dir >= 0) {
 		//log("go to (%d, %d)", t.first, t.second);
 		turn_1 = dir;
@@ -114,8 +120,8 @@ bool SmartSnake::act() {
 	}
 	log("!!!!!!!!!!!!!!!failed!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 	for (int i = 0; i < 4; i++) {
-		if (game_map->is_empty(game_map->get_next_position(position, current_dir), (step_length - 1) / speed + 1)) {
-			turn_1 = dir;
+		if (abs(i - current_dir) != 2 && game_map->is_empty(game_map->get_next_position(position, i))) {
+			turn_1 = i;
 			return true;
 		}
 	}
