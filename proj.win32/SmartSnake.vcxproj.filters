@@ -10,115 +10,32 @@
     <Filter Include="src">
       <UniqueIdentifier>{bb6c862e-70e9-49d9-81b7-3829a6f50471}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src\MyScene">
-      <UniqueIdentifier>{6882084c-5b99-4aae-89b4-7ac6b91e02b1}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="src\HelloWorld">
-      <UniqueIdentifier>{2944e189-8276-4faf-98e3-f4f518753530}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="src\Base">
-      <UniqueIdentifier>{11ba80be-6d4f-4f5b-ad98-a9be8d147c16}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="src\Headers">
-      <UniqueIdentifier>{82b3b69c-2066-4f9e-b848-17403dc1aae6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="src\MySprite">
-      <UniqueIdentifier>{1f7b043d-3806-4b09-93ac-c3a39d4f99fb}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="src\MyNode">
-      <UniqueIdentifier>{05278838-f7fc-49ed-85f6-52a6dcd40a42}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>win32</Filter>
     </ClCompile>
-    <ClCompile Include="..\Classes\MainMenuScene.cpp">
-      <Filter>src\MyScene</Filter>
-    </ClCompile>
     <ClCompile Include="..\Classes\AppDelegate.cpp">
-      <Filter>src\HelloWorld</Filter>
+      <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\Classes\HelloWorldScene.cpp">
-      <Filter>src\HelloWorld</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Classes\GameMenuScene.cpp">
-      <Filter>src\MyScene</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Classes\StorageScene.cpp">
-      <Filter>src\MyScene</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Classes\OptionScene.cpp">
-      <Filter>src\MyScene</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Classes\MyGameScene.cpp">
-      <Filter>src\MyScene</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Classes\SystemHeader.cpp">
-      <Filter>src\Base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Classes\Snake.cpp">
-      <Filter>src\MySprite</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Classes\GameMap.cpp">
-      <Filter>src\MyNode</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Classes\MissionSprite.cpp">
-      <Filter>src\MySprite</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Classes\SmartSnake.cpp">
-      <Filter>src\MySprite</Filter>
+      <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main.h">
       <Filter>win32</Filter>
     </ClInclude>
-    <ClInclude Include="..\Classes\SystemHeader.h">
-      <Filter>src\Base</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Classes\GameMenuScene.h">
-      <Filter>src\Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Classes\MainMenuScene.h">
-      <Filter>src\Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Classes\StorageScene.h">
-      <Filter>src\Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Classes\OptionScene.h">
-      <Filter>src\Headers</Filter>
+    <ClInclude Include="..\Classes\AppDelegate.h">
+      <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\Classes\HelloWorldScene.h">
-      <Filter>src\Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Classes\AppDelegate.h">
-      <Filter>src\Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Classes\MyGameScene.h">
-      <Filter>src\Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Classes\Snake.h">
-      <Filter>src\Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Classes\GameMap.h">
-      <Filter>src\Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Classes\MissionSprite.h">
-      <Filter>src\Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Classes\SmartSnake.h">
-      <Filter>src\Headers</Filter>
+      <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="game.rc">
       <Filter>resource</Filter>
     </ResourceCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <Xml Include="..\Resources\res\UTF8_string.xml">
-      <Filter>resource</Filter>
-    </Xml>
   </ItemGroup>
 </Project>

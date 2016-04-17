@@ -3,16 +3,16 @@
 
 <plist version="1.0">
     <dict>
-        <key>mission_challenge2</key>
-        <integer>11</integer>
         <key>mission_score1</key>
         <integer>0</integer>
+        <key>mission_challenge2</key>
+        <integer>11</integer>
         <key>mission_success1</key>
-        <integer>0</integer>
-        <key>mission_score2</key>
         <integer>0</integer>
         <key>mission_challenge1</key>
         <integer>17</integer>
+        <key>mission_score2</key>
+        <integer>0</integer>
         <key>mission_success2</key>
         <integer>0</integer>
         <key>mission_score3</key>
@@ -32,6 +32,6 @@
         <key>mission_success5</key>
         <integer>2</integer>
         <key>mission_challenge5</key>
-        <integer>26</integer>
+        <integer>28</integer>
     </dict>
 </plist>
