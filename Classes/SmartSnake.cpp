@@ -25,6 +25,7 @@ bool SmartSnake::init(string name, GameMap* game_map) {
 }
 
 void SmartSnake::eat_reward(int gid) {
+	hunger = 0;
 	target = pii(-1, -1);
 }
 
@@ -59,6 +60,17 @@ bool SmartSnake::go_ahead() {
 	if (!is_died && type == Snake::SnakeType::t_enemy) {
 		act();
 	}
+	if (!game_map->is_empty(game_map->get_next_position(position, turn_1))) {
+		vector<int> dir_v;
+		for (int i = 0; i < 4; i++) {
+			if (abs(i - current_dir) != 2 && game_map->is_empty(game_map->get_next_position(position, i))) {
+				dir_v.push_back(i);
+			}
+		}
+		if (dir_v.size() > 0) {
+			turn_1 = dir_v[random(0, (int)dir_v.size() - 1)];
+		}
+	}
 	if (!Snake::go_ahead()) {
 		return false;
 	}
@@ -75,7 +87,7 @@ bool SmartSnake::act() {
 		return false;
 	}
 	bool safe = true;
-	if (hunger > 100) {
+	if (hunger > game_map->get_empty_n()) {
 		safe = false;
 	}
 	if (target.first >= 0) {
@@ -88,21 +100,15 @@ bool SmartSnake::act() {
 		auto dir = game_map->get_target_shortest_path_dir(position, current_dir, target, this, safe);
 		if (dir >= 0) {
 			turn_1 = dir;
-			if (!game_map->is_empty(game_map->get_next_position(position, dir))) {
-				log("target = (%d, %d), dir = %d", target.first, target.second, dir);
-			}
 			//log("act 1, dir = %d, delay = %d", dir, clock() - begin_time);
 			return true;
 		}
 	}
 	else {
-		auto targets = game_map->get_foods();
+		auto targets = game_map->get_foods(this);
 		for (auto t : targets) {
 			auto dir = game_map->get_target_shortest_path_dir(position, current_dir, t, this, safe);
 			if (dir >= 0) {
-				if (!game_map->is_empty(game_map->get_next_position(position, dir))) {
-					log("target = (%d, %d), dir = %d", target.first, target.second, dir);
-				}
 				target = t;
 				turn_1 = dir;
 				//log("act 2, dir = %d, delay = %d", dir, clock() - begin_time);
@@ -110,7 +116,7 @@ bool SmartSnake::act() {
 			}
 		}
 	}
-	int lenght_step_min;
+	int lenght_step_min = 0;
 	auto dir = game_map->get_accessible_last_snake_node_dir(position, current_dir, this, lenght_step_min);
 	if (dir >= 0) {
 		//log("go to (%d, %d)", t.first, t.second);
@@ -118,12 +124,6 @@ bool SmartSnake::act() {
 		//log("act 3, dir = %d, delay = %d", dir, clock() - begin_time);
 		return true;
 	}
-	log("!!!!!!!!!!!!!!!failed!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-	for (int i = 0; i < 4; i++) {
-		if (abs(i - current_dir) != 2 && game_map->is_empty(game_map->get_next_position(position, i))) {
-			turn_1 = i;
-			return true;
-		}
-	}
+	//log("!!!!!!!!!!!!!!!failed!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 	return false;
 }

@@ -23,11 +23,10 @@ public:
 	DEFINE_VAR_GET(bool, is_died);
 	DEFINE_VAR_GET(bool, is_checked);
 	DEFINE_VAR_GET_SET(int, length);
+	DEFINE_VAR_GET_ADD(int, hunger);
 	DEFINE_VAR_GET_ADD(int, speed);
 	DEFINE_VAR_GET_ADD(int, step);
 	DEFINE_VAR_GET_ADD(int, time_stamp);
-protected:
-	int hunger;
 
 public:
 	~Snake();

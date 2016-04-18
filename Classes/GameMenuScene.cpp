@@ -68,7 +68,7 @@ bool GameMenu::init() {
 	for (int i = 1; i <= 20; i++) {
 		auto mission = Mission::create(i);
 		if (!mission) {
-			continue;
+			break;
 		}
 		log("--   %d -> %d", i, mission->get_game_map());
 		if (mission->get_score() > 0) {

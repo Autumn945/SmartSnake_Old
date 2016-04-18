@@ -25,6 +25,9 @@ public:
 	bool is_empty(pii pos, int delay = 0);
 
 	vector<pii> get_foods();
+	vector<pii> get_foods(Snake * snake);
+	void dfs_for_last_snake_node(pii now, int dir, int vis[max_game_width][max_game_height], pii pre_position[max_game_width][max_game_height], Sprite * snake_map[max_game_width][max_game_height], Snake * snake, int dir_f[4], int step, int & lenght_step_min, pii & target);
+	//void dfs_for_last_snake_node(pii now, int dir, int vis[max_game_width][max_game_height], pii pre_position[max_game_width][max_game_height], Sprite * snake_map[max_game_width][max_game_height], Snake * snake, int dir_f[4], int step, int & lenght_step_min);
 	int get_accessible_last_snake_node_dir(pii position, int dir, Snake* snake, int &);
 	int get_target_shortest_path_dir(pii position, int current_dir, pii target, Snake* snake, bool safe = false);
 	int get_target_longest_path_dir(pii position, int current_dir, pii target, Snake* snake);

@@ -24,11 +24,20 @@ public:
 		, food_heart
 		, food_shit
 	};
+	enum gameOverState {
+		hungry
+		, eat_shit
+		, impact_wall
+		, impact_snake
+		, no_way
+		, win
+	};
 	int remain_num[foods_num];
 	float cooldown[foods_num], current_cooldown[foods_num];
 	static const int max_heart = 5, max_pause_n = 5;
 	DEFINE_VAR_GET_ADD(int, score);
 	DEFINE_VAR_GET_ADD(int, heart);
+	DEFINE_VAR_GET_ADD(int, max_hunger);
 	DEFINE_VAR_GET_ADD(int, pause_n);
 
 	static Scene* createScene(int mission_id);
@@ -36,11 +45,17 @@ public:
 	virtual bool init(int mission_id);
 	virtual void update(float dt);
 	void update_dir();
-	void game_over();
+	void game_over(gameOverState state);
+	void set_pause(bool pause);
 	bool isUpdate;
-	int min_score, bug, flower, kill;
+	int bug, flower, kill;
 	Sprite *turn_1, *turn_2;
-	MenuItemFont *menu_clear_dir;
+	MenuItemFont *menu_clear_dir, *menu_back, *menu_again;
+	MenuItemToggle *menu_pause;
+	Menu* menu;
+	EventListenerKeyboard *listener_key;
+	EventListenerTouchOneByOne *listener_touch;
+	Sprite *sprite_ban;
 	GameMap* game_map;
 	vector<Snake*> snakes;
 };

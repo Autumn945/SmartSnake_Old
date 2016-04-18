@@ -24,6 +24,9 @@ MyGame * MyGame::create(int mission_id) {
 Scene* MyGame::createScene(int mission_id) {
 	auto scene = Scene::create();
 	auto layer = MyGame::create(mission_id);
+	if (!layer) {
+		return nullptr;
+	}
 	scene->addChild(layer);
 	return scene;
 }
@@ -34,13 +37,19 @@ bool MyGame::init(int mission_id) {
 	}
 	log("my game init");
 	auto mission = Mission::create(mission_id);
-	min_score = mission->flower[0];
+	if (!mission) {
+		return false;
+	}
 	score = 0;
 	heart = 3;
 	pause_n = 3;
+	max_hunger = 50;
 	this->setTag(mission_id);
 	game_map = mission->get_game_map();
 	game_map->setTag(mission_id);
+	sprite_ban = Sprite::create("ban.png");
+	sprite_ban->setVisible(false);
+	this->addChild(sprite_ban, 100);
 	log("%d", game_map);
 	this->addChild(game_map);
 	log("test");
@@ -92,7 +101,7 @@ bool MyGame::init(int mission_id) {
 	label_goal->setAnchorPoint(Vec2(0, 1));
 	label_goal->setPosition(0, y);
 	this->addChild(label_goal);
-	y -= label_goal->getContentSize().height + 10;
+	y -= label_goal->getContentSize().height + 20;
 	if (kill > 0) {
 		auto sprite = Sprite::create("snake.png");
 		sprite->setAnchorPoint(Vec2(0, 1));
@@ -129,11 +138,39 @@ bool MyGame::init(int mission_id) {
 		this->addChild(sprite);
 		this->addChild(label);
 	}
-	auto label_score = Label::createWithSystemFont(get_UTF8_string("score") + " 0", "abc", SMALL_LABEL_FONT_SIZE);
+	y -= 40;
+
+	auto label_state = Label::createWithSystemFont(get_UTF8_string("state"), "abc", MID_LABEL_FONT_SIZE);
+	label_state->setAnchorPoint(Vec2(0, 1));
+	label_state->setPosition(0, y);
+	this->addChild(label_state);
+	y -= label_state->getContentSize().height + 20;
+
+	auto sprite = Sprite::create("heart.png");
+	sprite->setAnchorPoint(Vec2(0, 1));
+	sprite->setPosition(x, y);
+	sprite->setName("sprite_heart");
+	this->addChild(sprite);
+	auto label_heart = Label::createWithSystemFont(" x" + Value(heart).asString(), "abc", SMALL_LABEL_FONT_SIZE);
+	label_heart->setAnchorPoint(Vec2(0, 1));
+	label_heart->setPosition(x + sprite->getContentSize().width + 5, y);
+	label_heart->setName("label_heart");
+	this->addChild(label_heart);
+	y -= sprite->getContentSize().height + 5;
+
+	auto label_hunger = Label::createWithSystemFont(get_UTF8_string("hunger") + "0/" + Value(max_hunger).asString(), "abc", SMALL_LABEL_FONT_SIZE);
+	label_hunger->setAnchorPoint(Vec2(0, 1));
+	label_hunger->setPosition(x, y);
+	label_hunger->setName("label_hunger");
+	this->addChild(label_hunger);
+	y -= label_hunger->getContentSize().height + 5;
+
+	auto label_score = Label::createWithSystemFont(get_UTF8_string("score") + "0", "abc", SMALL_LABEL_FONT_SIZE);
 	label_score->setAnchorPoint(Vec2(0, 1));
-	label_score->setPosition(0, y);
+	label_score->setPosition(x, y);
 	label_score->setName("label_score");
 	this->addChild(label_score);
+	y -= label_score->getContentSize().height + 5;
 
 	x = origin.x + visible_size.width - 8 * UNIT + 10; 
 	y = origin.y + visible_size.height - 10;
@@ -172,16 +209,18 @@ bool MyGame::init(int mission_id) {
 		}
 	}
 	y = origin.y;
-	auto menu_back = MenuItemFont::create(get_UTF8_string("back"), [this](Ref *sender) {
+	menu_back = MenuItemFont::create(get_UTF8_string("abandon"), [this](Ref *sender) {
+		string id_string = Value(this->getTag()).asString();
+		user_info["mission_challenge" + id_string] = user_info["mission_challenge" + id_string].asInt() + 1;
+		FileUtils::getInstance()->writeValueMapToFile(user_info, "res/user_info.xml");
 		auto next_scene = GameMenu::createScene();
 		auto Transition_scene = TransitionCrossFade::create(SCENE_TURN_TRANSITION_TIME, next_scene);
 		Director::getInstance()->replaceScene(Transition_scene);
 	});
 	menu_back->setAnchorPoint(Vec2(1, 0));
 	menu_back->setPosition(origin.x + visible_size.width, y);
-	menu_back->setVisible(false);
 	y += menu_back->getContentSize().height + 10;
-	auto menu_again = MenuItemFont::create(get_UTF8_string("again"), [this](Ref *sender) {
+	menu_again = MenuItemFont::create(get_UTF8_string("again"), [this](Ref *sender) {
 		string id_string = Value(this->getTag()).asString();
 		user_info["mission_challenge" + id_string] = user_info["mission_challenge" + id_string].asInt() + 1;
 		FileUtils::getInstance()->writeValueMapToFile(user_info, "res/user_info.xml");
@@ -191,10 +230,9 @@ bool MyGame::init(int mission_id) {
 	});
 	menu_again->setAnchorPoint(Vec2(0, 0));
 	menu_again->setPosition(x, origin.y);
-	menu_again->setVisible(false);
 	auto font_size = MenuItemFont::getFontSize();
 	MenuItemFont::setFontSize(BIG_LABEL_FONT_SIZE + 10);
-	auto menu_pause = MenuItemToggle::createWithCallback([this, menu_back, menu_again](Ref *ref) {
+	menu_pause = MenuItemToggle::createWithCallback([this](Ref *ref) {
 		if (isUpdate) {
 			if (pause_n <= 0) {
 				game_map->setVisible(false);
@@ -204,30 +242,37 @@ bool MyGame::init(int mission_id) {
 				auto label = (Label*)this->getChildByName("label_pause");
 				label->setString(" x" + Value(this->get_pause_n()).asString());
 			}
-			this->unscheduleUpdate();
-			isUpdate = false;
-			menu_back->setVisible(true);
-			menu_again->setVisible(true);
 		}
 		else {
-			game_map->setVisible(true);
-			this->scheduleUpdate();
-			isUpdate = true;
-			menu_back->setVisible(false);
-			menu_again->setVisible(false);
+			sprite_ban->stopAllActions();
+			sprite_ban->setVisible(false);
 		}
+		set_pause(isUpdate);
 	},
 		MenuItemFont::create(get_UTF8_string("pause")),
 		MenuItemFont::create(get_UTF8_string("go on")),
 		NULL
 		);
 	MenuItemFont::setFontSize(font_size);
+	auto menu_start = MenuItemFont::create(get_UTF8_string("start"), [this](Ref *sender) {
+		((Node*)sender)->setVisible(false);
+		menu_pause->setVisible(true);
+		menu_again->setVisible(false);
+		menu_back->setVisible(false);
+		auto label = (Label*)this->getChildByName("label_pause");
+		label->setVisible(true);
+		scheduleUpdate();
+	});
+	menu_start->setAnchorPoint(Vec2(0, 0));
+	menu_start->setPosition(x, y);
 	menu_pause->setAnchorPoint(Vec2(0, 0));
 	menu_pause->setPosition(x, y);
+	menu_pause->setVisible(false);
 	auto label_pause = Label::createWithSystemFont(" x" + Value(pause_n).asString(), "abc", SMALL_LABEL_FONT_SIZE);
 	label_pause->setName("label_pause");
 	label_pause->setAnchorPoint(Vec2(0, 0));
 	label_pause->setPosition(menu_pause->getPosition() + Vec2(menu_pause->getContentSize().width, 0));
+	label_pause->setVisible(false);
 	this->addChild(label_pause);
 	turn_1 = Sprite::create("arrow.png");
 	turn_2 = Sprite::create("arrow.png");
@@ -243,12 +288,11 @@ bool MyGame::init(int mission_id) {
 	//menu_clear_dir->setAnchorPoint(Vec2(0, 0));
 	menu_clear_dir->setPosition(turn_2->getPosition() + Vec2(turn_2->getContentSize().width + 10, 0));
 	update_dir();
-	auto menu = Menu::create(menu_back, menu_pause, menu_again, menu_clear_dir, NULL);
+	menu = Menu::create(menu_back, menu_pause, menu_again, menu_clear_dir, menu_start, NULL);
 	menu->setAnchorPoint(Vec2::ZERO);
 	menu->setPosition(Vec2::ZERO);
 	this->addChild(menu);
 
-	scheduleUpdate();
 	isUpdate = true;
 
 	auto layer = LayerColor::create(Color4B::GRAY, game_map->getContentSize().width, game_map->getContentSize().height);
@@ -260,7 +304,7 @@ bool MyGame::init(int mission_id) {
 	this->addChild(layer, -1);
 
 	//add listener
-	auto listener_touch = EventListenerTouchOneByOne::create();
+	listener_touch = EventListenerTouchOneByOne::create();
 	Vec2 *touch_begin = new Vec2();
 	listener_touch->onTouchBegan = [touch_begin](Touch *t, Event *e) {
 		auto position = t->getLocation();
@@ -321,7 +365,7 @@ bool MyGame::init(int mission_id) {
 			}
 		}
 	};
-	auto listener_key = EventListenerKeyboard::create();
+	listener_key = EventListenerKeyboard::create();
 	listener_key->onKeyPressed = [this](EventKeyboard::KeyCode key, Event *e) {
 		DIRECTION dir;
 		switch (key) {
@@ -362,15 +406,48 @@ bool MyGame::init(int mission_id) {
 }
 
 void MyGame::update(float dt) {
-	int dir = snakes[0]->get_current_dir();
-	if (snakes[0]->turn_1 >= 0) {
-		dir = snakes[0]->turn_1;
-	}
-	if (Snake::step_length - snakes[0]->get_step() <= 0
-		&& !game_map->is_empty(game_map->get_next_position(snakes[0]->get_position(), dir))) {
-		snakes[0]->turn_1 = snakes[0]->turn_2 = -1;
-		update_dir();
+	if (bug <= 0 && flower <= 0 && kill <= 0) {
+		game_over(win);
 		return;
+	}
+	bool player_go = false;
+	if (snakes[0]->get_step() >= Snake::step_length) {
+		player_go = true;
+		int dir = snakes[0]->get_current_dir();
+		if (snakes[0]->turn_1 >= 0) {
+			dir = snakes[0]->turn_1;
+		}
+		bool is_died = true;
+		bool can_go = false;
+		for (int i = 0; i < 4; i++) {
+			if (abs(i - snakes[0]->get_current_dir()) == 2) {
+				continue;
+			}
+			if (game_map->is_empty(game_map->get_next_position(snakes[0]->get_position(), i))) {
+				is_died = false;
+				if (i == dir) {
+					can_go = true;
+				}
+			}
+		}
+		if (is_died) {
+			game_over(no_way);
+		}
+		if (!can_go && get_heart() > 0) {
+			add_heart(-1);
+			auto label_heart = (Label*)this->getChildByName("label_heart");
+			label_heart->setString(" x" + Value(this->get_heart()).asString());
+			Device::vibrate(0.5);
+			sprite_ban->setPosition(snakes[0]->convertToWorldSpace(
+				snakes[0]->get_snake_nodes()->back()->getPosition() + UNIT * Vec2(dir_vector[dir].first, -dir_vector[dir].second)));
+			auto action = Blink::create(2, 5);
+			sprite_ban->setVisible(true);
+			sprite_ban->runAction(action);
+			//snakes[0]->turn_1 = snakes[0]->turn_2 = -1;
+			set_pause(true);
+			//update_dir();
+			return;
+		}
 	}
 	auto fps = Director::getInstance()->getAnimationInterval();
 	for (int i = 0; i < foods_num; i++) {
@@ -394,6 +471,7 @@ void MyGame::update(float dt) {
 			}
 		}
 	}
+	auto time_b = clock();
 	for (auto snake : snakes) {
 		snake->go_step();
 	}
@@ -402,6 +480,28 @@ void MyGame::update(float dt) {
 			snake->check();
 		}
 	}
+	if (!snakes[0]->get_is_died() && player_go) {
+		auto label_hunger = (Label*)this->getChildByName("label_hunger");
+		label_hunger->setString(get_UTF8_string("hunger") + Value(snakes[0]->get_hunger()).asString() + "/" + Value(max_hunger).asString());
+		bool hungry = false;
+		if (snakes[0]->get_hunger() >= max_hunger) {
+			snakes[0]->add_hunger(-20);
+			this->add_heart(-1);
+			hungry = true;
+		}
+		auto label_heart = (Label*)this->getChildByName("label_heart");
+		label_heart->setString(" x" + Value(this->get_heart()).asString());
+		if (this->get_heart() < 0) {
+			if (hungry) {
+				game_over(gameOverState::hungry);
+			}
+			else {
+				game_over(gameOverState::eat_shit);
+			}
+		}
+	}
+	time_b = clock() - time_b;
+	if(time_b > 10) log("delay = %d", time_b);
 }
 
 void MyGame::update_dir() {
@@ -424,15 +524,100 @@ void MyGame::update_dir() {
 	}
 }
 
-void MyGame::game_over() {
+void MyGame::game_over(gameOverState state) {
+	unscheduleUpdate();
 	string id_string = Value(this->getTag()).asString();
-	if (get_score() >= min_score && bug <= 0 && flower <= 0 && kill <= 0) {
+	menu_back->setString(get_UTF8_string("back"));
+	menu_back->setVisible(true);
+	menu_again->setVisible(true);
+	menu_pause->setVisible(false);
+	turn_1->setVisible(false);
+	turn_2->setVisible(false);
+	menu_clear_dir->setVisible(false);
+	Director::getInstance()->getEventDispatcher()->removeEventListener(listener_key);
+	Director::getInstance()->getEventDispatcher()->removeEventListener(listener_touch);
+	auto label_pause = (Label*)this->getChildByName("label_pause");
+	label_pause->setVisible(false);
+	if (state == win) {
 		user_info["mission_score" + id_string] = max(get_score(), user_info["mission_score" + id_string].asInt());
 		user_info["mission_success" + id_string] = user_info["mission_success" + id_string].asInt() + 1;
+		FileUtils::getInstance()->writeValueMapToFile(user_info, "res/user_info.xml");
+
+		auto label = Label::createWithSystemFont(get_UTF8_string("win"), "abc", MID_LABEL_FONT_SIZE);
+		label->setColor(Color3B::RED);
+		label->setAnchorPoint(menu_pause->getAnchorPoint());
+		label->setPosition(menu_pause->getPosition());
+		this->addChild(label);
+
+		auto next_mission_scene = MyGame::createScene(this->getTag() + 1);
+		if (next_mission_scene) {
+			auto menu_next = MenuItemFont::create(get_UTF8_string("next_mission"), [this](Ref* sender) {
+				auto next_mission_scene = MyGame::createScene(this->getTag() + 1);
+				auto Transition_scene = TransitionCrossFade::create(SCENE_TURN_TRANSITION_TIME, next_mission_scene);
+				Director::getInstance()->replaceScene(Transition_scene);
+			});
+			menu_next->setAnchorPoint(menu_pause->getAnchorPoint());
+			menu_next->setPosition(menu_pause->getPosition());
+			menu->addChild(menu_next);
+			label->setPositionY(menu_next->getPositionY() + menu_next->getContentSize().height + 5);
+		}
 	}
-	user_info["mission_challenge" + id_string] = user_info["mission_challenge" + id_string].asInt() + 1;
-	FileUtils::getInstance()->writeValueMapToFile(user_info, "res/user_info.xml");
-	auto next_scene = GameMenu::createScene();
-	auto Transition_scene = TransitionCrossFade::create(SCENE_TURN_TRANSITION_TIME, next_scene);
-	Director::getInstance()->replaceScene(Transition_scene);
+	else {
+		auto label_failed = Label::createWithSystemFont(get_UTF8_string("failed"), "abc", BIG_LABEL_FONT_SIZE);
+		label_failed->setColor(Color3B::RED);
+		label_failed->setAnchorPoint(menu_pause->getAnchorPoint());
+		label_failed->setPosition(menu_pause->getPosition());
+		this->addChild(label_failed);
+		string str = "i do not know";
+		switch (state) {
+		case MyGame::hungry:
+			str = "starvation";
+			break;
+		case MyGame::eat_shit:
+			str = "eat too much shit";
+			break;
+		case MyGame::impact_wall:
+			str = "impact wall";
+			break;
+		case MyGame::impact_snake:
+			str = "impact snake";
+			break;
+		case MyGame::no_way:
+			str = "no way";
+			break;
+		case MyGame::win:
+			break;
+		default:
+			break;
+		}
+		auto label_heart = (Label*)this->getChildByName("label_heart");
+		label_heart->setString(get_UTF8_string("broken"));
+		auto label_score = (Label*)this->getChildByName("label_score");
+		Label* label = Label::createWithSystemFont(get_UTF8_string(str), "abc", SMALL_LABEL_FONT_SIZE);
+		log("%s", get_UTF8_string(str).c_str());
+		label->setAnchorPoint(Vec2(0, 1));
+		label->setPosition(label_score->getPosition() - Vec2(0, label_score->getContentSize().height + 5));
+		label->setColor(Color3B::RED);
+		this->addChild(label);
+	}
+}
+
+void MyGame::set_pause(bool pause) {
+	if (!(isUpdate ^ pause)) {
+		if (pause) {
+			auto label = (Label*)this->getChildByName("label_pause");
+			label->setVisible(false);
+			this->unscheduleUpdate();
+		}
+		else {
+			auto label = (Label*)this->getChildByName("label_pause");
+			label->setVisible(true);
+			game_map->setVisible(true);
+			this->scheduleUpdate();
+		}
+		menu_back->setVisible(isUpdate);
+		menu_again->setVisible(isUpdate);
+		menu_pause->setSelectedIndex(isUpdate);
+		isUpdate = !isUpdate;
+	}
 }

@@ -24,29 +24,75 @@
     <string>继续</string>
     <key>again</key>
     <string>重来</string>
+    <key>abandon</key>
+    <string>放弃</string>
+    <key>failed</key>
+    <string>失败了！</string>
+    <key>win</key>
+    <string>真厉害！</string>
     <key>music</key>
-    <string>音乐:</string>
+    <string>音乐：</string>
     <key>soundEffects</key>
-    <string>音效:</string>
+    <string>音效：</string>
     <key>max_score</key>
-    <string>最高分:</string>
+    <string>最高分：</string>
     <key>score</key>
-    <string>得分:</string>
+    <string>得分：</string>
     <key>success/challenge</key>
-    <string>过关次数/挑战次数:</string>
+    <string>过关次数/挑战次数：</string>
     <key>controlModes</key>
-    <string>控制模式:</string>
+    <string>控制模式：</string>
     <key>touch</key>
     <string>点击</string>
     <key>slide</key>
     <string>滑动</string>
     <key>clear_user_info</key>
     <string>点击5次清除用户信息</string>
+    <key>next_mission</key>
+    <string>下一关</string>
     <key>mission_id</key>
     <string>第%d关</string>
     <key>goal</key>
     <string>目标：</string>
-    
+    <key>state</key>
+    <string>状态：</string>
+    <key>hunger</key>
+    <string>饥饿值：</string>
+    <key>broken</key>
+    <string>碎了！</string>
+    <key>no way</key>
+    <string>
+以为
+前面还有路
+然而...</string>
+    <key>impact snake</key>
+    <string>
+以为
+别的蛇是软的
+就去撞了一下
+然而...</string>
+    <key>impact wall</key>
+    <string>
+以为
+自己会爬墙
+然而...</string>
+    <key>eat too much shit</key>
+    <string>
+以为
+便便没毒
+就多吃了点
+然而...</string>
+    <key>starvation</key>
+    <string>
+以为
+自己不饿
+然而...</string>
+    <key>i do not know</key>
+    <string>
+不知不觉
+不明不白
+就这样挂了</string>
+
     <!--default string-->
     <key>undefinition</key>
     <string>未定义</string>

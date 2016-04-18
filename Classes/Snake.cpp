@@ -60,7 +60,7 @@ bool Snake::init(string name, GameMap* game_map) {
 	is_died = false;
 	snake_nodes = new queue<Sprite*>();
 	turn_1 = turn_2 = -1;
-	length = 2;
+	length = 3;
 	hunger = 0;
 	step = 0;
 	time_stamp = 0;
@@ -109,7 +109,7 @@ bool Snake::go_ahead() {
 	}
 	new_head();
 	is_checked = false;
-	hunger += 2;
+	hunger += 1;
 	((MyGame*)game_map->getParent())->update_dir();
 	return true;
 }
@@ -201,9 +201,13 @@ bool Snake::check() {
 	}
 	is_checked = true;
 	auto wall = game_map->getLayer("wall");
+	auto game = (MyGame*)game_map->getParent();
 	if (wall != NULL && wall->getTileGIDAt(Vec2(position.first, position.second)) > 0) {
 		log("%s p wall", this->getName().c_str());
 		this->go_die();
+		if (this->get_type() == SnakeType::t_player) {
+			game->game_over(MyGame::gameOverState::impact_wall);
+		}
 		return true;
 	}
 	auto sp = game_map->get_snake_map()[position.first][position.second];
@@ -217,12 +221,11 @@ bool Snake::check() {
 		}
 		else {
 			log("%s p %s", this->getName().c_str(), snk->getName().c_str());
-			if (sp == ((Snake*)sp->getParent())->get_snake_nodes()->back()) {
-				log("%s p %s", snk->getName().c_str(), this->getName().c_str());
-				((Snake*)sp->getParent())->go_die();
-			}
 		}
 		this->go_die();
+		if (this->get_type() == SnakeType::t_player) {
+			game->game_over(MyGame::gameOverState::impact_snake);
+		}
 		return true;
 	}
 	auto food = game_map->getLayer("food");
@@ -235,18 +238,28 @@ bool Snake::check() {
 }
 
 void Snake::eat_reward(int gid) {
+	hunger -= 20;
+	if (hunger < 0) {
+		hunger = 0;
+	}
 	auto game = (MyGame*)game_map->getParent();
 	game->add_score(food_score[gid - 1]);
 	auto label = (Label*)game->getChildByName("label_score");
-	label->setString(get_UTF8_string("score") + " " + Value(game->get_score()).asString()); auto food_gid = (MyGame::FOOD)gid;
+	label->setString(get_UTF8_string("score") + Value(game->get_score()).asString()); auto food_gid = (MyGame::FOOD)gid;
 	switch (food_gid) {
 	case MyGame::food_green_apple:
 		break;
 	case MyGame::food_red_apple:
 		break;
 	case MyGame::food_bird:
-		hunger = 0;
+	{
+		hunger -= 30;
+		if (hunger < 0) {
+			game->add_max_hunger(-hunger);
+			hunger = 0;
+		}
 		break;
+	}
 	case MyGame::food_cola:
 	{
 		if (game->get_pause_n() < MyGame::max_pause_n) {
@@ -268,8 +281,8 @@ void Snake::eat_reward(int gid) {
 				label->setString(" ok!");
 			}
 		}
+		break;
 	}
-	break;
 	case MyGame::food_flower:
 	{
 		game->flower--;
@@ -282,16 +295,20 @@ void Snake::eat_reward(int gid) {
 				label->setString(" ok!");
 			}
 		}
+		break;
 	}
-	break;
 	case MyGame::food_heart:
+	{
 		if (game->get_heart() < MyGame::max_heart) {
 			game->add_heart(1);
 		}
 		break;
+	}
 	case MyGame::food_shit:
+	{
 		game->add_heart(-1);
 		break;
+	}
 	default:
 		break;
 	}
@@ -299,7 +316,6 @@ void Snake::eat_reward(int gid) {
 
 bool Snake::eat(int gid) {
 	eat_reward(gid);
-	hunger = 0;
 	//score += MyGame::get_game_node()->get_speed();
 	snake_nodes->back()->setName("food");
 	add_time_stamp(1);
@@ -312,10 +328,10 @@ bool Snake::eat(int gid) {
 	auto food_gid = (MyGame::FOOD)gid;
 	switch (food_gid) {
 	case MyGame::food_green_apple:
-		this->add_speed(1);
+		this->add_speed(3);
 		break;
 	case MyGame::food_red_apple:
-		this->add_speed(-1);
+		this->add_speed(-2);
 		break;
 	case MyGame::food_bird:
 		break;
@@ -358,8 +374,6 @@ bool Snake::turn(DIRECTION dir) {
 
 bool Snake::go_die() {
 	is_died = true;
-	auto game = (MyGame*)game_map->getParent();
-	game->game_over();
 	return false;
 }
 
