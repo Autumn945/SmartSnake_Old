@@ -141,6 +141,9 @@ pii GameMap::get_next_position(pii now, int dir) {
 }
 
 bool GameMap::is_empty(pii pos, int delay) {
+	if (pos.first < 0 || pos.first >= max_game_width || pos.second < 0 || pos.second >= max_game_height) {
+		return false;
+	}
 	auto wall = this->getLayer("wall");
 	if (wall != NULL && wall->getTileGIDAt(Vec2(pos.first, pos.second)) > 0) {
 		return false;
